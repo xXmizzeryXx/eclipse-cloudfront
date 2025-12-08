@@ -38,7 +38,7 @@ eclipse/
 
 ## 👥 Credits
 
-- **Main Developers**: Mizzery, Itz_Crafted
+- **Main Developers**: Mizzery, Its_Crafted
 - **Backend Developer & Game Additions**: JollyE_yo
 
 ## 🔧 Built With
