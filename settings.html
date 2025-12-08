@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>eclipse. - settings</title>
+<link rel="icon" type="image/x-icon" href="assets/favicon/favicon.png" />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Raleway:wght@300;400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+<link rel="stylesheet" href="assets/css/styles.css" />
+<style>
+  main.content {
+    padding: 30px 40px;
+    overflow-y: auto;
+  }
+
+  .settings-header {
+    margin-bottom: 32px;
+  }
+
+  .settings-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 42px;
+    font-weight: 700;
+    color: #eee;
+    margin: 0 0 12px 0;
+  }
+
+  .settings-subtitle {
+    font-size: 18px;
+    color: #bdb1a0;
+    margin: 0;
+  }
+
+  .settings-grid {
+    display: grid;
+    gap: 24px;
+    max-width: 1200px;
+  }
+
+  .setting-section {
+    background: #1e160b;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 0 20px rgba(184,134,72,0.15);
+  }
+
+  .section-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: #b88640;
+    margin: 0 0 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-title i {
+    font-size: 22px;
+  }
+
+  .setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid rgba(184,134,72,0.2);
+  }
+
+  .setting-item:last-child {
+    border-bottom: none;
+  }
+
+  .setting-info {
+    flex: 1;
+  }
+
+  .setting-label {
+    font-size: 16px;
+    font-weight: 600;
+    color: #eee;
+    margin: 0 0 4px 0;
+  }
+
+  .setting-description {
+    font-size: 13px;
+    color: #bdb1a0;
+    margin: 0;
+  }
+
+  .setting-control {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  /* Toggle Switch */
+  .toggle-switch {
+    position: relative;
+    width: 50px;
+    height: 26px;
+    background: #0f0e0e;
+    border-radius: 13px;
+    cursor: pointer;
+    transition: background 0.3s;
+    border: 2px solid #b88640;
+  }
+
+  .toggle-switch.active {
+    background: #b88640;
+  }
+
+  .toggle-slider {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    background: #eee;
+    border-radius: 50%;
+    transition: transform 0.3s;
+  }
+
+  .toggle-switch.active .toggle-slider {
+    transform: translateX(24px);
+  }
+
+  /* Input Fields */
+  .setting-input {
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: none;
+    font-size: 14px;
+    font-family: inherit;
+    background: #0f0e0e;
+    color: #eee;
+    outline-offset: 2px;
+    outline-color: #b88640;
+    min-width: 200px;
+  }
+
+  .setting-input::placeholder {
+    color: #b3a177cc;
+  }
+
+  .setting-select {
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: none;
+    font-size: 14px;
+    font-family: inherit;
+    background: #0f0e0e;
+    color: #eee;
+    outline-offset: 2px;
+    outline-color: #b88640;
+    cursor: pointer;
+    min-width: 150px;
+  }
+
+  /* Buttons */
+  .setting-btn {
+    background-color: #b88640;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    color: #0f0e0e;
+    transition: background-color 0.3s ease;
+    font-size: 14px;
+  }
+
+  .setting-btn:hover {
+    background-color: #ddb86a;
+  }
+
+  .setting-btn-danger {
+    background-color: #d44;
+    color: #fff;
+  }
+
+  .setting-btn-danger:hover {
+    background-color: #e55;
+  }
+
+  .setting-btn-secondary {
+    background-color: rgba(184,134,72,0.3);
+    color: #eee;
+    border: 2px solid #b88640;
+  }
+
+  .setting-btn-secondary:hover {
+    background-color: rgba(184,134,72,0.5);
+  }
+
+  /* Quick Links Editor */
+  .quick-links-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .quick-link-item {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    background: #0f0e0e;
+    padding: 12px;
+    border-radius: 8px;
+  }
+
+  .quick-link-item input {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    font-size: 13px;
+    font-family: inherit;
+    background: #1e160b;
+    color: #eee;
+    outline-offset: 2px;
+    outline-color: #b88640;
+  }
+
+  .quick-link-item input::placeholder {
+    color: #b3a177cc;
+  }
+
+  .delete-link-btn {
+    background: rgba(221,68,68,0.3);
+    border: none;
+    color: #eee;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+  }
+
+  .delete-link-btn:hover {
+    background: #d44;
+    color: #fff;
+  }
+
+  .add-link-btn {
+    margin-top: 12px;
+  }
+
+  /* Documentation Links */
+  .doc-links {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .doc-link {
+    background: #0f0e0e;
+    padding: 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #eee;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+  }
+
+  .doc-link:hover {
+    border-color: #b88640;
+    background: rgba(184,134,72,0.1);
+  }
+
+  .doc-link i {
+    font-size: 24px;
+    color: #b88640;
+  }
+
+  .doc-link-text {
+    flex: 1;
+  }
+
+  .doc-link-title {
+    font-weight: 600;
+    font-size: 15px;
+    margin: 0 0 4px 0;
+  }
+
+  .doc-link-desc {
+    font-size: 12px;
+    color: #bdb1a0;
+    margin: 0;
+  }
+
+  /* Success Message */
+  .success-message {
+    position: fixed;
+    bottom: 100px;
+    right: 30px;
+    background: #b88640;
+    color: #0f0e0e;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    box-shadow: 0 4px 20px rgba(184,134,72,0.4);
+    z-index: 1000;
+    animation: slideIn 0.3s ease;
+    display: none;
+  }
+
+  .success-message.show {
+    display: block;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(400px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- Video Background -->
+<video id="videoBG" autoplay muted loop playsinline>
+  <source src="assets/bg/background.mp4" type="video/mp4">
+</video>
+
+<div class="app">
+  <!-- Sidebar -->
+  <nav class="sidebar" aria-label="Main sidebar navigation">
+    <div class="icon" title="Home" onclick="window.location.href='index.html'"><i class="fa-solid fa-house"></i></div>
+    <div class="icon" title="Browser" onclick="window.location.href='frame.html'"><i class="fa-solid fa-globe"></i></div>
+    <div class="icon" title="Random Tab Cloak" id="randomCloakBtn"><i class="fa-solid fa-moon"></i></div>
+    <div class="icon" title="Games" onclick="window.location.href='games.html'"><i class="fa-solid fa-gamepad"></i></div>
+    <div class="icon" title="Music" onclick="window.location.href='music.html'"><i class="fa-solid fa-headphones"></i></div>
+    <div class="icon" title="Credits" onclick="window.location.href='credits.html'"><i class="fa-solid fa-book"></i></div>
+    <div class="icon active" title="Settings" onclick="window.location.href='settings.html'"><i class="fa-solid fa-cog"></i></div>
+  </nav>
+
+  <!-- Main content -->
+  <main class="content" role="main">
+    
+    <div class="settings-header">
+      <h1 class="settings-title">
+        settings<span style="color: #b88640;">.</span>
+      </h1>
+      <p class="settings-subtitle">Customize your eclipse experience</p>
+    </div>
+
+    <div class="settings-grid">
+
+      <!-- Appearance Settings -->
+      <section class="setting-section">
+        <h2 class="section-title">
+          <i class="fa-solid fa-palette"></i>
+          Appearance
+        </h2>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <p class="setting-label">Font Size</p>
+            <p class="setting-description">Adjust the base font size (10-20px)</p>
+          </div>
+          <div class="setting-control">
+            <select id="fontSizeSelect" class="setting-select">
+              <option value="12">Small (12px)</option>
+              <option value="14" selected>Medium (14px)</option>
+              <option value="16">Large (16px)</option>
+              <option value="18">Extra Large (18px)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-info">
+            <p class="setting-label">Custom Video Background</p>
+            <p class="setting-description">Enter a direct video URL (.mp4)</p>
+          </div>
+          <div class="setting-control">
+            <input type="text" id="customBgInput" class="setting-input" placeholder="https://example.com/video.mp4" />
+            <button id="applyBgBtn" class="setting-btn">Apply</button>
+            <button id="resetBgBtn" class="setting-btn-secondary setting-btn">Reset</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Privacy & Security -->
+      <section class="setting-section">
+        <h2 class="section-title">
+          <i class="fa-solid fa-shield"></i>
+          Privacy & Security
+        </h2>
+
+        <div class="setting-item">
+          <div class="setting-info">
+            <p class="setting-label">Auto-Cloak on Startup</p>
+            <p class="setting-description">Automatically disguise tab when page loads</p>
+          </div>
+          <div class="setting-control">
+            <div id="autoCloakToggle" class="toggle-switch">
+              <div class="toggle-slider"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-info">
+            <p class="setting-label">Panic Key</p>
+            <p class="setting-description">Press this key to instantly redirect</p>
+          </div>
+          <div class="setting-control">
+            <input type="text" id="panicKeyInput" class="setting-input" placeholder="e.g., Escape, `, ~" maxlength="10" style="max-width: 150px;" />
+            <input type="text" id="panicUrlInput" class="setting-input" placeholder="Redirect URL" />
+            <button id="savePanicBtn" class="setting-btn">Save</button>
+          </div>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-info">
+            <p class="setting-label">Clear Bookmarks</p>
+            <p class="setting-description">Delete all saved bookmarks</p>
+          </div>
+          <div class="setting-control">
+            <button id="clearBookmarksBtn" class="setting-btn-danger setting-btn">Clear</button>
+          </div>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-info">
+            <p class="setting-label">Clear All Data</p>
+            <p class="setting-description">Remove all stored data (bookmarks, settings, etc.)</p>
+          </div>
+          <div class="setting-control">
+            <button id="clearDataBtn" class="setting-btn-danger setting-btn">Clear All</button>
+          </div>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-info">
+            <p class="setting-label">Reset All Settings</p>
+            <p class="setting-description">Restore default settings (keeps bookmarks)</p>
+          </div>
+          <div class="setting-control">
+            <button id="resetSettingsBtn" class="setting-btn-danger setting-btn">Reset</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Quick Links Editor -->
+      <section class="setting-section">
+        <h2 class="section-title">
+          <i class="fa-solid fa-link"></i>
+          Quick Links Editor
+        </h2>
+        <div class="setting-description" style="margin-bottom: 16px;">
+          Customize your homepage quick access links
+        </div>
+        
+        <div class="quick-links-list" id="quickLinksList">
+          <!-- Links will be populated by JavaScript -->
+        </div>
+        
+        <button id="addQuickLinkBtn" class="setting-btn add-link-btn">
+          <i class="fa-solid fa-plus"></i> Add Quick Link
+        </button>
+        
+        <button id="saveQuickLinksBtn" class="setting-btn" style="margin-top: 12px; width: 100%;">
+          Save Quick Links
+        </button>
+      </section>
+
+      <!-- Documentation -->
+      <section class="setting-section">
+        <h2 class="section-title">
+          <i class="fa-solid fa-book"></i>
+          Documentation & Help
+        </h2>
+        
+        <div class="doc-links">
+          <a href="https://github.com" target="_blank" class="doc-link">
+            <i class="fa-brands fa-github"></i>
+            <div class="doc-link-text">
+              <p class="doc-link-title">GitHub</p>
+              <p class="doc-link-desc">View source code</p>
+            </div>
+          </a>
+          
+          <a href="https://discord.gg/eclipse" target="_blank" class="doc-link">
+            <i class="fa-brands fa-discord"></i>
+            <div class="doc-link-text">
+              <p class="doc-link-title">Discord</p>
+              <p class="doc-link-desc">Join community</p>
+            </div>
+          </a>
+          
+          <a href="#" onclick="alert('eclipse v1.2.0\\n\\nA modern web proxy with tab cloaking, bookmarks, and games.\\n\\nMade with ❤️'); return false;" class="doc-link">
+            <i class="fa-solid fa-info-circle"></i>
+            <div class="doc-link-text">
+              <p class="doc-link-title">About</p>
+              <p class="doc-link-desc">Version info</p>
+            </div>
+          </a>
+          
+          <a href="credits.html" class="doc-link">
+            <i class="fa-solid fa-users"></i>
+            <div class="doc-link-text">
+              <p class="doc-link-title">Credits</p>
+              <p class="doc-link-desc">Contributors</p>
+            </div>
+          </a>
+        </div>
+      </section>
+
+    </div>
+
+  </main>
+</div>
+
+<!-- Status bar -->
+<footer class="status-bar" aria-label="Status bar">
+  <span class="status-dot" aria-hidden="true"></span>
+  <span>Connected</span>
+  <span>•</span>
+  <span>Settings</span>
+</footer>
+
+<!-- Success Message -->
+<div class="success-message" id="successMessage">
+  <i class="fa-solid fa-check"></i> Settings saved!
+</div>
+
+<script>
+  // ===== FONT SIZE =====
+  const fontSizeSelect = document.getElementById('fontSizeSelect');
+  const savedFontSize = localStorage.getItem('fontSize') || '14';
+  fontSizeSelect.value = savedFontSize;
+  document.body.style.fontSize = savedFontSize + 'px';
+
+  fontSizeSelect.addEventListener('change', function() {
+    const size = this.value;
+    document.body.style.fontSize = size + 'px';
+    localStorage.setItem('fontSize', size);
+    showSuccess('Font size updated!');
+  });
+
+  // ===== CUSTOM VIDEO BACKGROUND =====
+  const customBgInput = document.getElementById('customBgInput');
+  const applyBgBtn = document.getElementById('applyBgBtn');
+  const resetBgBtn = document.getElementById('resetBgBtn');
+  const videoBG = document.getElementById('videoBG');
+  const defaultBgSrc = 'assets/bg/background.mp4';
+
+  const savedBg = localStorage.getItem('customVideoBg');
+  if(savedBg) {
+    customBgInput.value = savedBg;
+    videoBG.querySelector('source').src = savedBg;
+    videoBG.load();
+  }
+
+  applyBgBtn.addEventListener('click', () => {
+    const url = customBgInput.value.trim();
+    if(url) {
+      videoBG.querySelector('source').src = url;
+      videoBG.load();
+      localStorage.setItem('customVideoBg', url);
+      showSuccess('Background updated!');
+    }
+  });
+
+  resetBgBtn.addEventListener('click', () => {
+    videoBG.querySelector('source').src = defaultBgSrc;
+    videoBG.load();
+    customBgInput.value = '';
+    localStorage.removeItem('customVideoBg');
+    showSuccess('Background reset!');
+  });
+
+  // ===== AUTO-CLOAK TOGGLE =====
+  const autoCloakToggle = document.getElementById('autoCloakToggle');
+  const autoCloakEnabled = localStorage.getItem('autoCloak') === 'true';
+  if(autoCloakEnabled) {
+    autoCloakToggle.classList.add('active');
+  }
+
+  autoCloakToggle.addEventListener('click', function() {
+    this.classList.toggle('active');
+    const enabled = this.classList.contains('active');
+    localStorage.setItem('autoCloak', enabled);
+    showSuccess(enabled ? 'Auto-cloak enabled!' : 'Auto-cloak disabled!');
+  });
+
+  // ===== PANIC KEY =====
+  const panicKeyInput = document.getElementById('panicKeyInput');
+  const panicUrlInput = document.getElementById('panicUrlInput');
+  const savePanicBtn = document.getElementById('savePanicBtn');
+
+  const savedPanicKey = localStorage.getItem('panicKey');
+  const savedPanicUrl = localStorage.getItem('panicUrl');
+  if(savedPanicKey) panicKeyInput.value = savedPanicKey;
+  if(savedPanicUrl) panicUrlInput.value = savedPanicUrl;
+
+  savePanicBtn.addEventListener('click', () => {
+    const key = panicKeyInput.value.trim();
+    const url = panicUrlInput.value.trim();
+    
+    if(key && url) {
+      localStorage.setItem('panicKey', key);
+      localStorage.setItem('panicUrl', url);
+      showSuccess('Panic key saved!');
+    } else {
+      alert('Please enter both a key and URL');
+    }
+  });
+
+  // Panic key listener
+  document.addEventListener('keydown', (e) => {
+    const panicKey = localStorage.getItem('panicKey');
+    const panicUrl = localStorage.getItem('panicUrl');
+    
+    if(panicKey && panicUrl) {
+      if(e.key === panicKey || e.key.toLowerCase() === panicKey.toLowerCase()) {
+        window.location.href = panicUrl;
+      }
+    }
+  });
+
+  // ===== CLEAR BOOKMARKS =====
+  document.getElementById('clearBookmarksBtn').addEventListener('click', () => {
+    if(confirm('Are you sure you want to delete all bookmarks? This cannot be undone.')) {
+      localStorage.removeItem('bookmarks');
+      showSuccess('Bookmarks cleared!');
+    }
+  });
+
+  // ===== CLEAR ALL DATA =====
+  document.getElementById('clearDataBtn').addEventListener('click', () => {
+    if(confirm('Are you sure you want to clear ALL data? This will delete bookmarks, settings, and everything else. This cannot be undone.')) {
+      localStorage.clear();
+      showSuccess('All data cleared!');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    }
+  });
+
+  // ===== RESET SETTINGS =====
+  document.getElementById('resetSettingsBtn').addEventListener('click', () => {
+    if(confirm('Reset all settings to default? (This will keep your bookmarks)')) {
+      const bookmarks = localStorage.getItem('bookmarks');
+      localStorage.clear();
+      if(bookmarks) {
+        localStorage.setItem('bookmarks', bookmarks);
+      }
+      showSuccess('Settings reset!');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    }
+  });
+
+  // ===== QUICK LINKS EDITOR =====
+  const defaultQuickLinks = [
+    { name: "YouTube", icon: "fa-brands fa-youtube", url: "https://www.youtube.com" },
+    { name: "Spotify", icon: "fa-brands fa-spotify", url: "https://open.spotify.com" },
+    { name: "Discord", icon: "fa-brands fa-discord", url: "https://discord.com" },
+    { name: "Twitch", icon: "fa-brands fa-twitch", url: "https://www.twitch.tv" },
+    { name: "GitHub", icon: "fa-brands fa-github", url: "https://github.com" },
+    { name: "Instagram", icon: "fa-brands fa-instagram", url: "https://instagram.com" }
+  ];
+
+  let quickLinks = JSON.parse(localStorage.getItem('quickLinks')) || defaultQuickLinks;
+
+  function renderQuickLinks() {
+    const list = document.getElementById('quickLinksList');
+    list.innerHTML = quickLinks.map((link, index) => `
+      <div class="quick-link-item">
+        <input type="text" placeholder="Name" value="${link.name}" data-index="${index}" data-field="name" class="quick-link-input" />
+        <input type="text" placeholder="Icon (e.g., fa-youtube)" value="${link.icon}" data-index="${index}" data-field="icon" class="quick-link-input" />
+        <input type="text" placeholder="URL" value="${link.url}" data-index="${index}" data-field="url" class="quick-link-input" />
+        <button class="delete-link-btn" data-index="${index}">
+          <i class="fa-solid fa-times"></i>
+        </button>
+      </div>
+    `).join('');
+
+    // Add event listeners
+    document.querySelectorAll('.quick-link-input').forEach(input => {
+      input.addEventListener('input', function() {
+        const index = parseInt(this.getAttribute('data-index'));
+        const field = this.getAttribute('data-field');
+        quickLinks[index][field] = this.value;
+      });
+    });
+
+    document.querySelectorAll('.delete-link-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const index = parseInt(this.getAttribute('data-index'));
+        quickLinks.splice(index, 1);
+        renderQuickLinks();
+      });
+    });
+  }
+
+  document.getElementById('addQuickLinkBtn').addEventListener('click', () => {
+    quickLinks.push({ name: '', icon: 'fa-link', url: '' });
+    renderQuickLinks();
+  });
+
+  document.getElementById('saveQuickLinksBtn').addEventListener('click', () => {
+    localStorage.setItem('quickLinks', JSON.stringify(quickLinks));
+    showSuccess('Quick links saved!');
+  });
+
+  renderQuickLinks();
+
+  // ===== RANDOM CLOAK (SIDEBAR) =====
+  const cloakPresets = [
+    { title: "Google", favicon: "https://www.google.com/favicon.ico" },
+    { title: "Google Docs", favicon: "https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico" },
+    { title: "Google Classroom", favicon: "https://ssl.gstatic.com/classroom/favicon.png" },
+    { title: "Canvas", favicon: "https://du11hjcvx0uqb.cloudfront.net/dist/images/favicon-e10d657a73.ico" }
+  ];
+
+  document.getElementById('randomCloakBtn').addEventListener('click', () => {
+    const randomPreset = cloakPresets[Math.floor(Math.random() * cloakPresets.length)];
+    document.title = randomPreset.title;
+    document.querySelector('link[rel="icon"]').href = randomPreset.favicon;
+    localStorage.setItem('cloakTitle', randomPreset.title);
+    localStorage.setItem('cloakFavicon', randomPreset.favicon);
+  });
+
+  // ===== SUCCESS MESSAGE =====
+  function showSuccess(message) {
+    const msg = document.getElementById('successMessage');
+    msg.innerHTML = '<i class="fa-solid fa-check"></i> ' + message;
+    msg.classList.add('show');
+    setTimeout(() => {
+      msg.classList.remove('show');
+    }, 3000);
+  }
+
+  // Apply saved font size on load
+  if(savedFontSize) {
+    document.body.style.fontSize = savedFontSize + 'px';
+  }
+</script>
+</body>
+</html>
