@@ -59,7 +59,6 @@
 </div>
 
 <script>
-  // Games list (kept in sync with games.html)
   const games = [
     { name: "Time Shooter 2", category: "action", path: "games/timeshooter2.html", description: "Time moves only when you move." },
     { name: "Slope", category: "arcade", path: "games/slope.html", description: "Don't let the ball crash." },
@@ -86,7 +85,6 @@
     descEl.textContent = description || '';
     frame.src = path;
     openRawBtn.href = path;
-    // update active in list
     document.querySelectorAll('.side-item').forEach(el => el.classList.remove('active'));
     const items = Array.from(document.querySelectorAll('.side-item'));
     const active = items.find(i => i.getAttribute('data-path') === path);

@@ -23,7 +23,6 @@
     .side-item .meta{display:flex;flex-direction:column;flex:1;min-width:0;margin-right:8px}
     .btn{background:transparent;border:2px solid #b88640;color:#b88640;padding:6px 10px;border-radius:8px;cursor:pointer}
     .btn.small{padding:4px 8px;font-size:12px}
-    /* Custom player controls */
     .player-card{box-shadow:0 6px 20px rgba(0,0,0,0.4)}
     .player-controls{display:flex;align-items:center;gap:12px}
     .control-btn{background:transparent;border:2px solid #b88640;color:#b88640;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:16px}
@@ -113,7 +112,6 @@
   </footer>
 
   <script>
-    // Upload-only playlist with persistence (IndexedDB + localStorage)
     const fileInput = document.getElementById('fileUpload');
     const playlistEl = document.getElementById('playlist');
     const audioPlayer = document.getElementById('audioPlayer');
@@ -284,7 +282,6 @@
       savePlaylistToStorage();
     }
 
-    // Custom player control wiring
     const playPauseBtn = document.getElementById('playPauseBtn');
     const progressEl = document.getElementById('progress');
     const currentTimeEl = document.getElementById('currentTime');
@@ -336,13 +333,11 @@
 
     volumeEl.addEventListener('input', (e)=>{ audioPlayer.volume = Number(e.target.value); });
 
-    // wire inputs
     fileInput.addEventListener('change', (e)=> addFiles(e.target.files));
     ['dragenter','dragover'].forEach(ev => playerContainer.addEventListener(ev, (e)=>{ e.preventDefault(); playerContainer.style.outline = '2px dashed #b88640'; }));
     ['dragleave','drop'].forEach(ev => playerContainer.addEventListener(ev, (e)=>{ e.preventDefault(); playerContainer.style.outline = 'none'; }));
     playerContainer.addEventListener('drop', (e)=>{ const items = e.dataTransfer.files; addFiles(items); });
 
-    // load saved playlist
     window.addEventListener('load', ()=> loadPlaylistFromStorage());
 
     // ===== EMERGENCY CLOAKING =====
