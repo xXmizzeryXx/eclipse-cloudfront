@@ -44,16 +44,13 @@
         <h2 style="color:#b88640; margin-bottom:16px;">Music Player</h2>
 
         <div class="search-bar" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
-          <input type="text" id="mediaLink" placeholder="Paste audio/video link here" style="flex:1;min-width:220px;">
-          <button onclick="loadMedia()">Play</button>
           <label for="fileUpload" class="btn" style="border-color:#b88640;color:#b88640;">Upload MP3</label>
           <input id="fileUpload" type="file" accept="audio/*" multiple style="display:none;" />
         </div>
 
         <div id="playerContainer" style="margin-top:24px; display:flex; gap:16px; align-items:flex-start;">
           <div style="flex:1; display:flex; flex-direction:column; gap:12px;">
-            <video id="mediaPlayer" controls style="width:100%; border-radius:12px; background:#1e160b; display:none;"></video>
-            <audio id="audioPlayer" controls style="width:100%; border-radius:12px; background:#1e160b; display:block;"></audio>
+              <audio id="audioPlayer" controls style="width:100%; border-radius:12px; background:#1e160b; display:block;"></audio>
             <div id="uploadHint" style="color:#bdb1a0;font-size:13px">You can also drag & drop MP3 files here.</div>
           </div>
 
@@ -76,35 +73,12 @@
   </footer>
 
   <script>
-    function loadMedia() {
-      const url = document.getElementById('mediaLink').value.trim();
-      const video = document.getElementById('mediaPlayer');
-      const audio = document.getElementById('audioPlayer');
-
-      if (!url) return alert("Please enter a link!");
-
-      // Simple type check by file extension
-      const ext = url.split('.').pop().toLowerCase();
-      if (['mp4','webm','ogg'].includes(ext)) {
-        audio.style.display = 'none';
-        video.style.display = 'block';
-        video.src = url;
-        video.play();
-      } else if (['mp3','wav','ogg'].includes(ext)) {
-        video.style.display = 'none';
-        audio.style.display = 'block';
-        audio.src = url;
-        audio.play();
-      } else {
-        alert("Unsupported media type.");
-      }
-    }
+    // (Paste-link player removed — upload-only mode)
 
     // ===== UPLOAD / PLAYLIST =====
     const fileInput = document.getElementById('fileUpload');
     const playlistEl = document.getElementById('playlist');
     const audioPlayer = document.getElementById('audioPlayer');
-    const mediaPlayer = document.getElementById('mediaPlayer');
     const uploadHint = document.getElementById('uploadHint');
 
     let playlist = [];
@@ -171,7 +145,7 @@
       const t = playlist[index];
       if (!t) return;
       audioPlayer.style.display = 'block';
-      mediaPlayer.style.display = 'none';
+      // no video player — audio player used
       audioPlayer.src = t.url;
       audioPlayer.play().catch(()=>{});
       // highlight current
