@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>music - eclipse.</title>
+  <link rel="icon" type="image/x-icon" href="assets/favicon/favicon.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Raleway:wght@300;400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <style>
+    header.top-bar .logo { font-size: 28px; }
+    .content { padding: 28px; }
+    .player-area { max-width: 900px; }
+  </style>
+</head>
+<body>
+
+  <video id="videoBG" autoplay muted loop playsinline>
+    <source src="assets/bg/background.mp4" type="video/mp4">
+  </video>
+
+  <div class="app">
+    <!-- Sidebar -->
+    <nav class="sidebar" aria-label="Main sidebar navigation">
+      <div class="icon" title="Home" onclick="window.location.href='index.html'"><i class="fa-solid fa-house"></i></div>
+      <div class="icon" title="Browser" onclick="window.location.href='frame.html'"><i class="fa-solid fa-globe"></i></div>
+      <div class="icon" title="Emergency Cloaking" id="emergencyCloakBtn"><i class="fa-solid fa-moon"></i></div>
+      <div class="icon" title="Games" onclick="window.location.href='games.html'"><i class="fa-solid fa-gamepad"></i></div>
+      <div class="icon active" title="Music" onclick="window.location.href='music.html'"><i class="fa-solid fa-headphones"></i></div>
+      <div class="icon" title="Credits" onclick="window.location.href='credits.html'"><i class="fa-solid fa-book"></i></div>
+      <div class="icon" title="Settings" onclick="window.location.href='settings.html'"><i class="fa-solid fa-cog"></i></div>
+    </nav>
+
+    <!-- Main content -->
+    <main class="content" role="main">
+
+      <!-- Header / Branding -->
+      <header class="top-bar">
+        <h1 class="logo" aria-label="Eclipse branding">eclipse<span class="dot">.</span></h1>
+      </header>
+
+      <div class="player-area">
+        <h2 style="color:#b88640; margin-bottom:16px;">Link Player</h2>
+
+        <div class="search-bar">
+          <input type="text" id="mediaLink" placeholder="Paste audio/video link here">
+          <button onclick="loadMedia()">Play</button>
+        </div>
+
+        <div id="playerContainer" style="margin-top:24px; display:flex; flex-direction:column; gap:16px;">
+          <video id="mediaPlayer" controls style="width:100%; border-radius:12px; background:#1e160b; display:none;"></video>
+          <audio id="audioPlayer" controls style="width:100%; border-radius:12px; background:#1e160b; display:none;"></audio>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Status bar -->
+  <footer class="status-bar" aria-label="Status bar">
+    <span class="status-dot" aria-hidden="true"></span>
+    <span>Connected</span>
+    <span>•</span>
+    <span>Music</span>
+  </footer>
+
+  <script>
+    function loadMedia() {
+      const url = document.getElementById('mediaLink').value.trim();
+      const video = document.getElementById('mediaPlayer');
+      const audio = document.getElementById('audioPlayer');
+
+      if (!url) return alert("Please enter a link!");
+
+      // Simple type check by file extension
+      const ext = url.split('.').pop().toLowerCase();
+      if (['mp4','webm','ogg'].includes(ext)) {
+        audio.style.display = 'none';
+        video.style.display = 'block';
+        video.src = url;
+        video.play();
+      } else if (['mp3','wav','ogg'].includes(ext)) {
+        video.style.display = 'none';
+        audio.style.display = 'block';
+        audio.src = url;
+        audio.play();
+      } else {
+        alert("Unsupported media type.");
+      }
+    }
+
+    // ===== EMERGENCY CLOAKING =====
+    const cloakPresets = [
+      { title: "Google", favicon: "https://www.google.com/favicon.ico" },
+      { title: "Google Docs", favicon: "https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico" },
+      { title: "Google Classroom", favicon: "https://ssl.gstatic.com/classroom/favicon.png" },
+      { title: "Canvas", favicon: "https://du11hjcvx0uqb.cloudfront.net/dist/images/favicon-e10d657a73.ico" },
+      { title: "Gmail", favicon: "https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico" },
+      { title: "Google Drive", favicon: "https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" },
+      { title: "Google Slides", favicon: "https://ssl.gstatic.com/docs/presentations/images/favicon5.ico" },
+      { title: "Google Sheets", favicon: "https://ssl.gstatic.com/docs/spreadsheets/favicon3.ico" },
+      { title: "YouTube", favicon: "https://www.youtube.com/s/desktop/6e6c14c5/img/favicon_32x32.png" },
+      { title: "Wikipedia", favicon: "https://www.wikipedia.org/static/favicon/wikipedia.ico" }
+    ];
+
+    const cloakBtn = document.getElementById('emergencyCloakBtn');
+    if (cloakBtn) {
+      cloakBtn.addEventListener('click', () => {
+        const randomPreset = cloakPresets[Math.floor(Math.random() * cloakPresets.length)];
+        document.title = randomPreset.title;
+        const icon = document.querySelector('link[rel="icon"]');
+        if (icon) icon.href = randomPreset.favicon;
+        localStorage.setItem('cloakTitle', randomPreset.title);
+        localStorage.setItem('cloakFavicon', randomPreset.favicon);
+      });
+    }
+
+    // Apply saved cloak on page load
+    const savedTitle = localStorage.getItem('cloakTitle');
+    const savedFavicon = localStorage.getItem('cloakFavicon');
+    if(savedTitle) {
+      document.title = savedTitle;
+    }
+    if(savedFavicon) {
+      const icon = document.querySelector('link[rel="icon"]');
+      if (icon) icon.href = savedFavicon;
+    }
+  </script>
+</body>
+</html>
