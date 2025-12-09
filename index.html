@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 <link rel="stylesheet" href="assets/css/styles.css" />
 <style>
-  /* Override main content to use grid */
+  
   main.content {
     padding: 20px 30px;
     display: grid;
@@ -21,7 +21,7 @@
     position: relative;
   }
 
-  /* Main Menu Button */
+  
   .main-menu-btn {
     position: fixed;
     bottom: 80px;
@@ -50,7 +50,7 @@
     font-size: 18px;
   }
 
-  /* Main Menu Overlay */
+  
   .main-menu-overlay {
     display: none;
     position: fixed;
@@ -114,12 +114,12 @@
     grid-column: 1 / -1;
   }
 
-  /* Hide main menu button when menu is open */
+  
   .main-menu-overlay.active ~ .app .main-menu-btn {
     display: none;
   }
 
-  /* Header spanning full width */
+  
   header.top-bar {
     grid-column: 1 / -1;
     gap: 32px;
@@ -135,7 +135,7 @@
     margin-bottom: 8px;
   }
 
-  /* Search bar spanning full width */
+  
   .search-bar {
     grid-column: 1 / -1;
     max-width: 100%;
@@ -147,7 +147,7 @@
     padding: 12px 24px;
   }
 
-  /* Left column */
+  
   .left-column {
     display: flex;
     flex-direction: column;
@@ -155,7 +155,7 @@
     min-height: 0;
   }
 
-  /* Right column */
+  
   .right-column {
     display: flex;
     flex-direction: column;
@@ -163,7 +163,7 @@
     min-height: 0;
   }
 
-  /* Tab Cloaking - Compact */
+  
   .cloak-section {
     background: #1e160b;
     border-radius: 12px;
@@ -248,7 +248,7 @@
     color: #0f0e0e;
   }
 
-  /* Quick Access - Compact */
+  
   .quick-access {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -265,7 +265,7 @@
     font-size: 20px;
   }
 
-  /* Bookmarks Section - Scrollable */
+  
   .bookmarks-section {
     display: flex;
     flex-direction: column;
@@ -401,7 +401,7 @@
     font-size: 13px;
   }
 
-  /* Changelog - Scrollable */
+  
   .changelog-section {
     display: flex;
     flex-direction: column;
@@ -463,7 +463,7 @@
     margin: 0;
   }
 
-  /* Modal */
+  
   .modal {
     display: none;
     position: fixed;
@@ -545,7 +545,7 @@
   .modal-btn-secondary:hover {
     background-color: rgba(184,134,72,0.2);
   }
-/* Visitor Stats Section */
+
 .stats-section {
   grid-column: 1 / -1;
   background: #1e160b;
@@ -624,7 +624,7 @@
     grid-template-columns: 1fr;
   }
 }
-  /* Import Modal Textarea */
+  
   .import-textarea {
     width: 100%;
     min-height: 200px;
@@ -643,7 +643,7 @@
     color: #b3a177cc;
   }
 
-  /* Export Success Message */
+  
   .export-message {
     position: fixed;
     bottom: 100px;
@@ -672,7 +672,7 @@
     }
   }
 
-  /* Responsive adjustments */
+  
   @media (max-width: 1200px) {
     main.content {
       grid-template-columns: 1fr;
@@ -695,12 +695,12 @@
 </head>
 <body>
 
-<!-- Video Background -->
+
 <video id="videoBG" autoplay muted loop playsinline>
   <source src="assets/bg/background.mp4" type="video/mp4">
 </video>
 
-<!-- Main Menu Overlay -->
+
 <div class="main-menu-overlay" id="mainMenuOverlay">
   <button class="menu-close-btn" id="closeMenuBtn">
     <i class="fa-solid fa-times"></i>
@@ -733,7 +733,7 @@
   <div id="statsError" style="display: none;" class="stats-error"></div>
 </section>
     <div class="left-column">
-      <!-- Quick Access -->
+      
       <section class="quick-access">
         <a href="#" data-url="https://www.youtube.com" class="proxy-link">
           <i class="fa-brands fa-youtube"></i> YouTube
@@ -755,7 +755,7 @@
         </a>
       </section>
 
-      <!-- Bookmarks -->
+      
       <section class="bookmarks-section">
         <div class="bookmarks-header">
           <h2 class="bookmarks-title">Bookmarks<span style="color: #b88640;">.</span></h2>
@@ -776,7 +776,7 @@
         </div>
       </section>
 
-      <!-- Tab Cloaking -->
+      
       <section class="cloak-section">
         <div class="cloak-header">
           <i class="fa-solid fa-mask"></i>
@@ -799,9 +799,9 @@
       </section>
     </div>
 
-    <!-- Right Column in Menu -->
+    
     <div class="right-column">
-      <!-- Changelog -->
+      
       <section class="changelog-section">
         <h2 class="changelog-title">Changelog<span style="color: #b88640;">.</span></h2>
         <div class="changelog-items">
@@ -847,7 +847,7 @@
 </div>
 
 <div class="app">
-  <!-- Sidebar -->
+  
   <nav class="sidebar" aria-label="Main sidebar navigation">
     <div class="icon active" title="Home" onclick="window.location.href='index.html'"><i class="fa-solid fa-house"></i></div>
     <div class="icon" title="Browser" onclick="window.location.href='frame.html'"><i class="fa-solid fa-globe"></i></div>
@@ -858,10 +858,10 @@
     <div class="icon" title="Settings" onclick="window.location.href='settings.html'"><i class="fa-solid fa-cog"></i></div>
   </nav>
 
-  <!-- Main content -->
+  
   <main class="content" role="main">
 
-    <!-- Header -->
+    
     <header class="top-bar">
       <h1 class="logo">
         eclipse<span class="dot">.</span>
@@ -879,7 +879,7 @@
       </div>
     </header>
 
-    <!-- Search -->
+    
     <form class="search-bar" onsubmit="return false;">
       <input id="searchInput" type="text" placeholder="Enter URL or search..." autocomplete="off" />
       <button type="submit" id="searchBtn">Browse →</button>
@@ -887,14 +887,14 @@
 
   </main>
 
-  <!-- Main Menu Button -->
+  
   <button class="main-menu-btn" id="mainMenuBtn">
     <i class="fa-solid fa-bars"></i>
     Main Menu
   </button>
 </div>
 
-<!-- Status bar -->
+
 <footer class="status-bar">
   <span class="status-dot"></span>
   <span>Connected</span>
@@ -902,7 +902,7 @@
   <span>100%</span>
 </footer>
 
-<!-- Add Bookmark Modal -->
+
 <div class="modal" id="bookmarkModal">
   <div class="modal-content">
     <h2 class="modal-title">Add Bookmark</h2>
@@ -918,7 +918,7 @@
   </div>
 </div>
 
-<!-- Import Bookmarks Modal -->
+
 <div class="modal" id="importModal">
   <div class="modal-content">
     <h2 class="modal-title">Import Bookmarks</h2>
@@ -932,13 +932,13 @@
   </div>
 </div>
 
-<!-- Export Success Message -->
+
 <div class="export-message" id="exportMessage">
   <i class="fa-solid fa-check"></i> Bookmarks copied to clipboard!
 </div>
 
 <script>
-  // ===== CLOCK =====
+  
   const ones = ["ZERO","ONE","TWO","THREE","FOUR","FIVE","SIX","SEVEN","EIGHT","NINE"];
   const teens = ["TEN","ELEVEN","TWELVE","THIRTEEN","FOURTEEN","FIFTEEN","SIXTEEN","SEVENTEEN","EIGHTEEN","NINETEEN"];
   const tens = ["","","TWENTY","THIRTY","FORTY","FIFTY"];
@@ -974,7 +974,7 @@
   updateDateTime();
   setInterval(updateDateTime, 60000);
 
-  // ===== SEARCH =====
+  
   const searchInput = document.getElementById('searchInput');
   const searchBtn = document.getElementById('searchBtn');
 
@@ -990,7 +990,7 @@
     if(e.key === 'Enter') performSearch();
   });
 
-  // ===== QUICK ACCESS =====
+  
   document.querySelectorAll('.proxy-link').forEach(link => {
     link.addEventListener('click', function(e){
       e.preventDefault();
@@ -1000,11 +1000,11 @@
     });
   });
 
-  // ===== TAB CLOAKING =====
+  
   const originalTitle = document.title;
   const originalFavicon = document.querySelector('link[rel="icon"]').href;
 
-  // Random cloak presets
+  
   const cloakPresets = [
     { title: "Google", favicon: "https://www.google.com/favicon.ico" },
     { title: "Google Docs", favicon: "https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico" },
@@ -1018,7 +1018,7 @@
     { title: "Wikipedia", favicon: "https://www.wikipedia.org/static/favicon/wikipedia.ico" }
   ];
 
-  // Random cloak button in sidebar
+  
   document.getElementById('randomCloakBtn').addEventListener('click', () => {
     const randomPreset = cloakPresets[Math.floor(Math.random() * cloakPresets.length)];
     document.title = randomPreset.title;
@@ -1026,7 +1026,7 @@
     localStorage.setItem('cloakTitle', randomPreset.title);
     localStorage.setItem('cloakFavicon', randomPreset.favicon);
     
-    // Update inputs if they exist
+    
     if(document.getElementById('cloakTitle')) {
       document.getElementById('cloakTitle').value = randomPreset.title;
       document.getElementById('cloakFavicon').value = randomPreset.favicon;
@@ -1056,7 +1056,7 @@
     localStorage.removeItem('cloakFavicon');
   });
 
-  // Preset buttons
+  
   document.querySelectorAll('.preset-btn').forEach(btn => {
     btn.addEventListener('click', function() {
       const title = this.getAttribute('data-title');
@@ -1070,7 +1070,7 @@
     });
   });
 
-  // Load saved cloak on page load
+  
   const savedTitle = localStorage.getItem('cloakTitle');
   const savedFavicon = localStorage.getItem('cloakFavicon');
   if(savedTitle) {
@@ -1086,7 +1086,7 @@
     }
   }
 
-  // ===== BOOKMARKS =====
+  
   let bookmarks = JSON.parse(localStorage.getItem('bookmarks')) || [];
 
   function renderBookmarks() {
@@ -1116,7 +1116,7 @@
     renderBookmarks();
   }
 
-  // Modal controls
+  
   const modal = document.getElementById('bookmarkModal');
   const addBtn = document.getElementById('addBookmarkBtn');
   const cancelBtn = document.getElementById('cancelBookmarkBtn');
@@ -1141,7 +1141,7 @@
     form.reset();
   });
 
-  // Close modal on outside click
+  
   modal.addEventListener('click', (e) => {
     if(e.target === modal) {
       modal.classList.remove('active');
@@ -1149,10 +1149,10 @@
     }
   });
 
-  // Initial render
+  
   renderBookmarks();
 
-  // ===== EXPORT/IMPORT BOOKMARKS =====
+  
   const exportBtn = document.getElementById('exportBookmarksBtn');
   const importBtn = document.getElementById('importBookmarksBtn');
   const importModal = document.getElementById('importModal');
@@ -1161,7 +1161,7 @@
   const cancelImportBtn = document.getElementById('cancelImportBtn');
   const exportMessage = document.getElementById('exportMessage');
 
-  // Export bookmarks to clipboard
+  
   exportBtn.addEventListener('click', () => {
     const json = JSON.stringify(bookmarks, null, 2);
     navigator.clipboard.writeText(json).then(() => {
@@ -1174,18 +1174,18 @@
     });
   });
 
-  // Open import modal
+  
   importBtn.addEventListener('click', () => {
     importModal.classList.add('active');
   });
 
-  // Cancel import
+  
   cancelImportBtn.addEventListener('click', () => {
     importModal.classList.remove('active');
     importTextarea.value = '';
   });
 
-  // Import bookmarks from JSON
+  
   importForm.addEventListener('submit', (e) => {
     e.preventDefault();
     try {
@@ -1196,14 +1196,14 @@
         throw new Error('Invalid format: Expected an array');
       }
 
-      // Validate each bookmark has required fields
+      
       for(let bookmark of imported) {
         if(!bookmark.name || !bookmark.url) {
           throw new Error('Invalid bookmark format: Missing name or url');
         }
       }
 
-      // Merge with existing bookmarks (avoid duplicates by URL)
+      
       const existingUrls = new Set(bookmarks.map(b => b.url));
       const newBookmarks = imported.filter(b => !existingUrls.has(b.url));
       
@@ -1214,7 +1214,7 @@
       importModal.classList.remove('active');
       importTextarea.value = '';
       
-      // Show success message
+      
       exportMessage.innerHTML = '<i class="fa-solid fa-check"></i> Imported ' + newBookmarks.length + ' new bookmarks!';
       exportMessage.classList.add('show');
       setTimeout(() => {
@@ -1226,7 +1226,7 @@
     }
   });
 
-  // Close import modal on outside click
+  
   importModal.addEventListener('click', (e) => {
     if(e.target === importModal) {
       importModal.classList.remove('active');
@@ -1234,7 +1234,7 @@
     }
   });
 
-  // ===== MAIN MENU =====
+  
   const menuOverlay = document.getElementById('mainMenuOverlay');
   const mainMenuBtn = document.getElementById('mainMenuBtn');
   const closeMenuBtn = document.getElementById('closeMenuBtn');
@@ -1247,7 +1247,7 @@
     menuOverlay.classList.remove('active');
   });
 
-  // Close menu on escape key
+  
   document.addEventListener('keydown', (e) => {
     if(e.key === 'Escape' && menuOverlay.classList.contains('active')) {
       menuOverlay.classList.remove('active');

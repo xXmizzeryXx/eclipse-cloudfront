@@ -1,4 +1,4 @@
-/* Reset & base */
+
 * {
   box-sizing: border-box;
 }
@@ -13,7 +13,7 @@ body {
   overflow: hidden;
 }
 
-/* Video background */
+
 #videoBG {
   position: fixed;
   top: 0;
@@ -24,14 +24,14 @@ body {
   z-index: -1;
 }
 
-/* Container to hold everything */
+
 .app {
   flex-grow: 1;
   display: flex;
   overflow: hidden;
 }
 
-/* Sidebar */
+
 nav.sidebar {
   width: 72px;
   background-color: #0f0e0e;
@@ -55,7 +55,7 @@ nav.sidebar .icon.active {
   color: #ddb86a;
 }
 
-/* Main content area */
+
 main.content {
   flex-grow: 1;
   padding: 40px 50px;
@@ -66,7 +66,7 @@ main.content {
   overflow-y: auto;
 }
 
-/* Header - branding + date/time */
+
 header.top-bar {
   display: flex;
   flex-wrap: wrap;
@@ -85,7 +85,7 @@ header.top-bar h1.logo .dot {
   color: #b88640;
 }
 
-/* Date/time container */
+
 .date-time {
   display: flex;
   flex-direction: column;
@@ -123,7 +123,7 @@ header.top-bar h1.logo .dot {
   color: #b88640;
 }
 
-/* Search bar */
+
 .search-bar {
   display: flex;
   gap: 12px;
@@ -160,7 +160,7 @@ header.top-bar h1.logo .dot {
   background-color: #ddb86a;
 }
 
-/* Quick Access */
+
 .quick-access {
   max-width: 900px;
   display: flex;
@@ -195,7 +195,7 @@ header.top-bar h1.logo .dot {
   pointer-events: none;
 }
 
-/* Info Cards */
+
 .info-cards {
   display: flex;
   gap: 20px;
@@ -234,7 +234,7 @@ header.top-bar h1.logo .dot {
   color: #bdb1a0;
 }
 
-/* Status bar */
+
 footer.status-bar {
   background: #0f0e0e;
   color: #bdb1a0;
@@ -253,7 +253,7 @@ footer.status-bar .status-dot {
   border-radius: 50%;
 }
 
-/* Credits Page Styles */
+
 .credits-section {
   max-width: 900px;
   width: 100%;
@@ -341,7 +341,7 @@ footer.status-bar .status-dot {
   font-style: italic;
 }
 
-/* Responsive */
+
 @media (max-width: 900px) {
   main.content {
     padding: 30px 20px;

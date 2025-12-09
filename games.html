@@ -143,13 +143,13 @@
 </head>
 <body>
 
-<!-- Video Background -->
+
 <video id="videoBG" autoplay muted loop playsinline>
   <source src="assets/bg/background.mp4" type="video/mp4">
 </video>
 
 <div class="app">
-  <!-- Sidebar -->
+  
   <nav class="sidebar" aria-label="Main sidebar navigation">
     <div class="icon" title="Home" onclick="window.location.href='index.html'"><i class="fa-solid fa-house"></i></div>
     <div class="icon" title="Browser" onclick="window.location.href='frame.html'"><i class="fa-solid fa-globe"></i></div>
@@ -160,7 +160,7 @@
     <div class="icon" title="Settings" onclick="window.location.href='settings.html'"><i class="fa-solid fa-cog"></i></div>
   </nav>
 
-  <!-- Main content -->
+  
   <main class="content" role="main">
     
     <div class="games-header">
@@ -170,12 +170,12 @@
       <p class="games-subtitle" id="pageSubtitle">Browse and play popular unblocked games</p>
     </div>
 
-    <!-- Search Bar -->
+    
     <div class="search-games">
       <input type="text" id="gameSearch" placeholder="Search games..." />
     </div>
 
-    <!-- Category Filters -->
+    
     <div class="category-filters">
       <button class="filter-btn active" data-category="all">All Games</button>
       <button class="filter-btn" data-category="action">Action</button>
@@ -186,9 +186,9 @@
       <button class="filter-btn" data-category="arcade">Arcade</button>
     </div>
 
-    <!-- Games Grid -->
+    
     <div class="games-grid" id="gamesGrid">
-      <!-- Games will be populated by JavaScript -->
+      
     </div>
 
     <div class="no-results" id="noResults" style="display: none;">
@@ -198,7 +198,7 @@
   </main>
 </div>
 
-<!-- Status bar -->
+
 <footer class="status-bar" aria-label="Status bar">
   <span class="status-dot" aria-hidden="true"></span>
   <span>Connected</span>
@@ -208,12 +208,12 @@
 </footer>
 
 <script>
-  // ===== CONFIGURATION =====
-  // Edit page text here
+  
+  
   const pageConfig = {
-    title: "games",  // Title text (don't include the dot)
+    title: "games",  
     subtitle: "Browse and play popular unblocked games",
-    header: "games - eclipse."  // Browser tab title
+    header: "games - eclipse."  
   };
 
   const games = [
@@ -273,9 +273,9 @@
     },
   ];
 
-  // ===== DO NOT EDIT BELOW THIS LINE =====
   
-  // Apply page configuration
+  
+  
   document.title = pageConfig.header;
   document.getElementById('pageTitle').innerHTML = pageConfig.title + '<span style="color: #b88640;">.</span>';
   document.getElementById('pageSubtitle').textContent = pageConfig.subtitle;
@@ -283,7 +283,7 @@
   let currentCategory = 'all';
   let searchQuery = '';
 
-  // Render games
+  
   function renderGames() {
     const grid = document.getElementById('gamesGrid');
     const noResults = document.getElementById('noResults');
@@ -316,7 +316,7 @@
     document.getElementById('gameCount').textContent = filtered.length;
   }
 
-  // Category filter buttons
+  
   document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', function() {
       document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -326,16 +326,16 @@
     });
   });
 
-  // Search functionality
+  
   document.getElementById('gameSearch').addEventListener('input', function(e) {
     searchQuery = e.target.value;
     renderGames();
   });
 
-  // Initial render
+  
   renderGames();
 
-  // ===== EMERGENCY CLOAKING =====
+  
   const cloakPresets = [
     { title: "Google", favicon: "https://www.google.com/favicon.ico" },
     { title: "Google Docs", favicon: "https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico" },
@@ -357,7 +357,7 @@
     localStorage.setItem('cloakFavicon', randomPreset.favicon);
   });
 
-  // Apply saved cloak on page load
+  
   const savedTitle = localStorage.getItem('cloakTitle');
   const savedFavicon = localStorage.getItem('cloakFavicon');
   if(savedTitle) {

@@ -29,7 +29,7 @@
 			: /iphone|ipad|ipod/i.test(i)
 			? (h +=
 					"<br><br>Note: the <strong>iOS simulator</strong> is not currently supported due to an <a href='https://bugs.webkit.org/show_bug.cgi?id=191064'>Apple bug</a>. If you are using the simulator, try testing on a real device instead.")
-			: (/msie/i.test(i) || /trident/i.test(i)) && !/edge\//i.test(i)
+			: (/msie/i.test(i) || /trident/i.test(i)) && !/edge\
 			? (h +=
 					"<br><br>Note: <strong>Internet Explorer</strong> is not supported. Try using <a href='https://www.google.com/chrome'>Chrome</a> or <a href='https://www.mozilla.org/firefox'>Firefox</a> instead.")
 			: a

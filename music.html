@@ -12,7 +12,7 @@
     header.top-bar .logo { font-size: 28px; }
     .content { padding: 28px; }
     .player-area { max-width: 900px; }
-    /* Playlist sidebar (match game-modal styles) */
+    
     .sidebar.playlist { width:320px; background:#1e160b; border-radius:12px; padding:16px; box-shadow:0 6px 24px rgba(0,0,0,0.4); }
     .sidebar.playlist h4{margin:0 0 12px 0;font-size:14px;color:#b88640;text-transform:uppercase}
     .game-list{display:flex;flex-direction:column;gap:10px;overflow:auto;max-height:60vh;padding-right:6px}
@@ -31,7 +31,7 @@
     .time{font-size:12px;color:#bdb1a0;text-align:right}
     .vol-wrap{display:flex;align-items:center}
     #volume{width:100px;accent-color:#b88640}
-    /* style range for consistency */
+    
     input[type=range]{-webkit-appearance:none;appearance:none;background:transparent}
     input[type=range]::-webkit-slider-runnable-track{height:6px;background:#24180f;border-radius:6px}
     input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:#b88640;border-radius:50%;margin-top:-4px}
@@ -45,7 +45,7 @@
   </video>
 
   <div class="app">
-    <!-- Sidebar -->
+    
     <nav class="sidebar" aria-label="Main sidebar navigation">
       <div class="icon" title="Home" onclick="window.location.href='index.html'"><i class="fa-solid fa-house"></i></div>
       <div class="icon" title="Browser" onclick="window.location.href='frame.html'"><i class="fa-solid fa-globe"></i></div>
@@ -56,10 +56,10 @@
       <div class="icon" title="Settings" onclick="window.location.href='settings.html'"><i class="fa-solid fa-cog"></i></div>
     </nav>
 
-    <!-- Main content -->
+    
     <main class="content" role="main">
 
-      <!-- Header / Branding -->
+      
       <header class="top-bar">
         <h1 class="logo" aria-label="Eclipse branding">eclipse<span class="dot">.</span></h1>
       </header>
@@ -103,7 +103,7 @@
     </main>
   </div>
 
-  <!-- Status bar -->
+  
   <footer class="status-bar" aria-label="Status bar">
     <span class="status-dot" aria-hidden="true"></span>
     <span>Connected</span>
@@ -122,7 +122,7 @@
     const DB_NAME = 'eclipse_music_db';
     const STORE_NAME = 'tracks';
 
-    let playlist = []; // {id,name,url}
+    let playlist = []; 
     let currentIndex = -1;
 
     function openDB(){
@@ -181,7 +181,7 @@
         const saved = JSON.parse(raw);
         for (const s of saved){
           const blob = await getBlobFromDB(s.id);
-          if (!blob) continue; // skip missing blobs
+          if (!blob) continue; 
           const url = URL.createObjectURL(blob);
           playlist.push({ id: s.id, name: s.name, url });
         }
@@ -263,11 +263,11 @@
       const t = playlist[index];
       if (!t) return;
       const newName = prompt('Rename track', t.name);
-      if (newName === null) return; // cancelled
+      if (newName === null) return; 
       const trimmed = newName.trim();
       if (trimmed.length === 0) return alert('Name cannot be empty');
       playlist[index].name = trimmed;
-      // update DB record name too (read record and update name safely)
+      
       openDB().then(db => {
         const tx = db.transaction(STORE_NAME, 'readwrite');
         const store = tx.objectStore(STORE_NAME);
@@ -340,7 +340,7 @@
 
     window.addEventListener('load', ()=> loadPlaylistFromStorage());
 
-    // ===== EMERGENCY CLOAKING =====
+    
     const cloakPresets = [
       { title: "Google", favicon: "https://www.google.com/favicon.ico" },
       { title: "Google Docs", favicon: "https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico" },
@@ -366,7 +366,7 @@
       });
     }
 
-    // Apply saved cloak on page load
+    
     const savedTitle = localStorage.getItem('cloakTitle');
     const savedFavicon = localStorage.getItem('cloakFavicon');
     if(savedTitle) {

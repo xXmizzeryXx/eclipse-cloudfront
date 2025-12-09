@@ -1,13 +1,13 @@
 console.log("Poki wrapper load");
-///~
+
 function poki_init_raw() {
     console.log("Poki wrapper init");
-    // fix GMS1 bug with iframes
+    
     var ctr = document.getElementById("gm4html5_div_id");
     if (ctr && !ctr.frames) ctr.frames = [];
     return 0;
 }
-///~
+
 function poki_script_closure_raw(self, other, script, custom) {
     return function(result) {
         window.gml_Script_gmcallback_poki_closure(self, other, script, result, custom)
@@ -30,25 +30,25 @@ function poki_happy_time(magnitude) {
     if (PokiSDK) PokiSDK.happyTime(magnitude);
 }
 
-///~
+
 function poki_commercial_break_raw(fn) {
     if (PokiSDK) {
         PokiSDK.commercialBreak().then(function() { fn(true); });
     } else setTimeout(function() { fn(false); }, 0);
 }
 
-///~
+
 function poki_rewarded_break_raw(fn) {
     if (PokiSDK) {
         PokiSDK.rewardedBreak().then(fn);
     } else setTimeout(function() { fn(false); }, 0);
 }
 
-/// https://yal.cc/gamemaker-html5-loading-bar-extended/
+
 var inst = { };
-///~
+
 function poki_loadbar(ctx, width, height, total, current, image) {
-    if (window.PokiSDK) { // if you have your own loadbar, just copy this block in there
+    if (window.PokiSDK) { 
         if (window.PokiSDK_loadState == 0) {
             window.PokiSDK_loadState = 1;
             PokiSDK.gameLoadingStart();
@@ -85,7 +85,7 @@ function poki_loadbar(ctx, width, height, total, current, image) {
             return r;
         } else return d;
     }
-    // get parameters:
+    
     var backgroundColor = getc("background_color", "#FFFFFF");
     var barBackgroundColor = getc("bar_background_color", "#FFFFFF");
     var barForegroundColor = getc("bar_foreground_color", "#242238");
@@ -94,10 +94,10 @@ function poki_loadbar(ctx, width, height, total, current, image) {
     var barHeight = getf("bar_height", 20);
     var barBorderWidth = getf("bar_border_width", 2);
     var barOffset = getf("bar_offset", 10);
-    // background:
+    
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, width, height);
-    // image:
+    
     var totalHeight, barTop;
     if (image != null) {
         var rect = getw("image_rect");
@@ -108,19 +108,19 @@ function poki_loadbar(ctx, width, height, total, current, image) {
             (width - rect[2]) >> 1, image_y, rect[2], rect[3]);
         barTop = image_y + rect[3] + barOffset;
     } else barTop = (height - barHeight) >> 1;
-    // bar border:
+    
     var barLeft = (width - barWidth) >> 1;
     ctx.fillStyle = barBorderColor;
     ctx.fillRect(barLeft, barTop, barWidth, barHeight);
-    //
+    
     var barInnerLeft = barLeft + barBorderWidth;
     var barInnerTop = barTop + barBorderWidth;
     var barInnerWidth = barWidth - barBorderWidth * 2;
     var barInnerHeight = barHeight - barBorderWidth * 2;
-    // bar background:
+    
     ctx.fillStyle = barBackgroundColor;
     ctx.fillRect(barInnerLeft, barInnerTop, barInnerWidth, barInnerHeight);
-    // bar foreground:
+    
     var barLoadedWidth = Math.round(barInnerWidth * current / total);
     ctx.fillStyle = barForegroundColor;
     ctx.fillRect(barInnerLeft, barInnerTop, barLoadedWidth, barInnerHeight);

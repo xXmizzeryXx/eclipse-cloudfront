@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 <link rel="stylesheet" href="assets/css/styles.css" />
 <style>
-  /* Override for frame layout */
+  
   body {
     overflow: hidden;
   }
@@ -41,7 +41,7 @@
     margin: 0;
   }
 
-  /* Browser controls */
+  
   .browser-controls {
     display: flex;
     align-items: center;
@@ -116,7 +116,7 @@
     background: #ddb86a;
   }
 
-  /* Date/time adjustments for smaller header */
+  
   header.top-bar .date-time {
     font-size: 16px;
   }
@@ -136,7 +136,7 @@
     letter-spacing: 2px;
   }
 
-  /* Browser iframe */
+  
   #browserFrame {
     width: 100%;
     flex: 1;
@@ -145,7 +145,7 @@
     display: block;
   }
 
-  /* Frame container */
+  
   .frame-container {
     flex: 1;
     display: flex;
@@ -155,13 +155,13 @@
 </head>
 <body>
 
-<!-- Video Background -->
+
 <video id="videoBG" autoplay muted loop playsinline>
   <source src="assets/bg/background.mp4" type="video/mp4">
 </video>
 
 <div class="app">
-  <!-- Sidebar -->
+  
   <nav class="sidebar" aria-label="Main sidebar navigation">
     <div class="icon" title="Home" onclick="window.location.href='index.html'"><i class="fa-solid fa-house"></i></div>
     <div class="icon active" title="Browser" onclick="window.location.href='frame.html'"><i class="fa-solid fa-globe"></i></div>
@@ -172,10 +172,10 @@
     <div class="icon" title="Settings" onclick="window.location.href='settings.html'"><i class="fa-solid fa-cog"></i></div>
   </nav>
 
-  <!-- Main content -->
+  
   <main class="content" role="main" aria-label="Main content area">
     
-    <!-- Browser Header -->
+    
     <header class="top-bar">
       <h1 class="logo" aria-label="Eclipse branding" onclick="window.location.href='index.html'">
         eclipse<span class="dot">.</span>
@@ -198,7 +198,7 @@
         </button>
       </div>
 
-      <!-- Date/Time -->
+      
       <div class="date-time" aria-live="polite" aria-atomic="true" role="region" aria-label="Current date and time">
         <span class="date-box" id="dateBox" aria-label="Current date"></span>
         <div class="date-time-line">
@@ -212,7 +212,7 @@
       </div>
     </header>
 
-    <!-- Browser Frame -->
+    
     <div class="frame-container">
       <iframe id="browserFrame"></iframe>
     </div>
@@ -220,7 +220,7 @@
   </main>
 </div>
 
-<!-- Status bar -->
+
 <footer class="status-bar" aria-label="Status bar">
   <span class="status-dot" aria-hidden="true"></span>
   <span>Connected</span>
@@ -229,7 +229,7 @@
 </footer>
 
 <script>
-  // Clock functionality
+  
   const ones = ["ZERO","ONE","TWO","THREE","FOUR","FIVE","SIX","SEVEN","EIGHT","NINE"];
   const teens = ["TEN","ELEVEN","TWELVE","THIRTEEN","FOURTEEN","FIFTEEN","SIXTEEN","SEVENTEEN","EIGHTEEN","NINETEEN"];
   const tens = ["","","TWENTY","THIRTY","FORTY","FIFTY"];
@@ -265,7 +265,7 @@
   updateDateTime();
   setInterval(updateDateTime, 60000);
 
-  // Browser functionality
+  
   const params = new URLSearchParams(window.location.search);
   const query = params.get('q');
   const browserFrame = document.getElementById('browserFrame');
@@ -283,31 +283,31 @@
     currentURL = url;
     addressBar.value = url;
     
-    // Build searcher.html URL with all parameters
+    
     const searcherURL = 'searcher.html?q=' + encodeURIComponent(url) + '&backend=ultraviolet&wisp=wss://wisp.mercurywork.shop/';
     browserFrame.src = searcherURL;
     
     statusText.textContent = 'Loading...';
   }
 
-  // Initialize with query parameter
+  
   if (query) {
     loadURL(query);
   }
 
-  // Address bar functionality
+  
   addressBar.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
       const newURL = addressBar.value.trim();
       if (newURL) {
-        // Update URL and reload frame
+        
         const newFrameURL = 'frame.html?q=' + encodeURIComponent(newURL);
         window.location.href = newFrameURL;
       }
     }
   });
 
-  // Reload button
+  
   reloadBtn.addEventListener('click', function() {
     if (currentURL) {
       loadURL(currentURL);
@@ -316,27 +316,27 @@
     }
   });
 
-  // Back button
+  
   backBtn.addEventListener('click', function() {
     window.history.back();
   });
 
-  // Forward button
+  
   forwardBtn.addEventListener('click', function() {
     window.history.forward();
   });
 
-  // Update status when frame loads
+  
   browserFrame.addEventListener('load', function() {
     statusText.textContent = 'Ready';
   });
 
-  // Enable back/forward buttons based on history
+  
   if (window.history.length > 1) {
     backBtn.disabled = false;
   }
 
-  // ===== EMERGENCY CLOAKING =====
+  
   const cloakPresets = [
     { title: "Google", favicon: "https://www.google.com/favicon.ico" },
     { title: "Google Docs", favicon: "https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico" },
@@ -358,7 +358,7 @@
     localStorage.setItem('cloakFavicon', randomPreset.favicon);
   });
 
-  // Apply saved cloak on page load
+  
   const savedTitle = localStorage.getItem('cloakTitle');
   const savedFavicon = localStorage.getItem('cloakFavicon');
   if(savedTitle) {

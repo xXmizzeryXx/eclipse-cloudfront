@@ -2668,9 +2668,7 @@
                   (function (e, t) {
                     let r = t.fn.call(t.this),
                       n = (function (e) {
-                        let t = e.indexOf("/*scramtag ");
-                        if (-1 === t) return null;
-                        let r = e.indexOf("*/", t);
+                        let t = e.indexOf("", t);
                         if (-1 === r)
                           throw (console.log(e, t, r), Error("unreachable"));
                         let n = e.substring(t + 2, r).split(" ");
@@ -6654,7 +6652,7 @@ self.WASM = '${r}';`),
             "desc",
             "title",
           ]),
-          f = /\s|\//;
+          f = /\s|\
         class g {
           constructor(e, t = {}) {
             var r, i, s, o, a, l;

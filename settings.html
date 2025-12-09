@@ -95,7 +95,7 @@
     align-items: center;
   }
 
-  /* Toggle Switch */
+  
   .toggle-switch {
     position: relative;
     width: 50px;
@@ -126,7 +126,7 @@
     transform: translateX(24px);
   }
 
-  /* Input Fields */
+  
   .setting-input {
     padding: 10px 14px;
     border-radius: 6px;
@@ -158,7 +158,7 @@
     min-width: 150px;
   }
 
-  /* Buttons */
+  
   .setting-btn {
     background-color: #b88640;
     border: none;
@@ -195,7 +195,7 @@
     background-color: rgba(184,134,72,0.5);
   }
 
-  /* Quick Links Editor */
+  
   .quick-links-list {
     display: flex;
     flex-direction: column;
@@ -250,7 +250,7 @@
     margin-top: 12px;
   }
 
-  /* Documentation Links */
+  
   .doc-links {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -297,7 +297,7 @@
     margin: 0;
   }
 
-  /* Success Message */
+  
   .success-message {
     position: fixed;
     bottom: 100px;
@@ -331,13 +331,13 @@
 </head>
 <body>
 
-<!-- Video Background -->
+
 <video id="videoBG" autoplay muted loop playsinline>
   <source src="assets/bg/background.mp4" type="video/mp4">
 </video>
 
 <div class="app">
-  <!-- Sidebar -->
+  
   <nav class="sidebar" aria-label="Main sidebar navigation">
     <div class="icon" title="Home" onclick="window.location.href='index.html'"><i class="fa-solid fa-house"></i></div>
     <div class="icon" title="Browser" onclick="window.location.href='frame.html'"><i class="fa-solid fa-globe"></i></div>
@@ -348,7 +348,7 @@
     <div class="icon active" title="Settings" onclick="window.location.href='settings.html'"><i class="fa-solid fa-cog"></i></div>
   </nav>
 
-  <!-- Main content -->
+  
   <main class="content" role="main">
     
     <div class="settings-header">
@@ -360,7 +360,7 @@
 
     <div class="settings-grid">
 
-      <!-- Appearance Settings -->
+      
       <section class="setting-section">
         <h2 class="section-title">
           <i class="fa-solid fa-palette"></i>
@@ -395,7 +395,7 @@
         </div>
       </section>
 
-      <!-- Privacy & Security -->
+      
       <section class="setting-section">
         <h2 class="section-title">
           <i class="fa-solid fa-shield"></i>
@@ -457,7 +457,7 @@
         </div>
       </section>
 
-      <!-- Quick Links Editor -->
+      
       <section class="setting-section">
         <h2 class="section-title">
           <i class="fa-solid fa-link"></i>
@@ -468,7 +468,7 @@
         </div>
         
         <div class="quick-links-list" id="quickLinksList">
-          <!-- Links will be populated by JavaScript -->
+          
         </div>
         
         <button id="addQuickLinkBtn" class="setting-btn add-link-btn">
@@ -480,7 +480,7 @@
         </button>
       </section>
 
-      <!-- Documentation -->
+      
       <section class="setting-section">
         <h2 class="section-title">
           <i class="fa-solid fa-book"></i>
@@ -527,7 +527,7 @@
   </main>
 </div>
 
-<!-- Status bar -->
+
 <footer class="status-bar" aria-label="Status bar">
   <span class="status-dot" aria-hidden="true"></span>
   <span>Connected</span>
@@ -535,13 +535,13 @@
   <span>Settings</span>
 </footer>
 
-<!-- Success Message -->
+
 <div class="success-message" id="successMessage">
   <i class="fa-solid fa-check"></i> Settings saved!
 </div>
 
 <script>
-  // ===== FONT SIZE =====
+  
   const fontSizeSelect = document.getElementById('fontSizeSelect');
   const savedFontSize = localStorage.getItem('fontSize') || '14';
   fontSizeSelect.value = savedFontSize;
@@ -554,7 +554,7 @@
     showSuccess('Font size updated!');
   });
 
-  // ===== CUSTOM VIDEO BACKGROUND =====
+  
   const customBgInput = document.getElementById('customBgInput');
   const applyBgBtn = document.getElementById('applyBgBtn');
   const resetBgBtn = document.getElementById('resetBgBtn');
@@ -586,7 +586,7 @@
     showSuccess('Background reset!');
   });
 
-  // ===== AUTO-CLOAK TOGGLE =====
+  
   const autoCloakToggle = document.getElementById('autoCloakToggle');
   const autoCloakEnabled = localStorage.getItem('autoCloak') === 'true';
   if(autoCloakEnabled) {
@@ -600,7 +600,7 @@
     showSuccess(enabled ? 'Auto-cloak enabled!' : 'Auto-cloak disabled!');
   });
 
-  // ===== PANIC KEY =====
+  
   const panicKeyInput = document.getElementById('panicKeyInput');
   const panicUrlInput = document.getElementById('panicUrlInput');
   const savePanicBtn = document.getElementById('savePanicBtn');
@@ -623,7 +623,7 @@
     }
   });
 
-  // Panic key listener
+  
   document.addEventListener('keydown', (e) => {
     const panicKey = localStorage.getItem('panicKey');
     const panicUrl = localStorage.getItem('panicUrl');
@@ -635,7 +635,7 @@
     }
   });
 
-  // ===== CLEAR BOOKMARKS =====
+  
   document.getElementById('clearBookmarksBtn').addEventListener('click', () => {
     if(confirm('Are you sure you want to delete all bookmarks? This cannot be undone.')) {
       localStorage.removeItem('bookmarks');
@@ -643,7 +643,7 @@
     }
   });
 
-  // ===== CLEAR ALL DATA =====
+  
   document.getElementById('clearDataBtn').addEventListener('click', () => {
     if(confirm('Are you sure you want to clear ALL data? This will delete bookmarks, settings, and everything else. This cannot be undone.')) {
       localStorage.clear();
@@ -654,7 +654,7 @@
     }
   });
 
-  // ===== RESET SETTINGS =====
+  
   document.getElementById('resetSettingsBtn').addEventListener('click', () => {
     if(confirm('Reset all settings to default? (This will keep your bookmarks)')) {
       const bookmarks = localStorage.getItem('bookmarks');
@@ -669,7 +669,7 @@
     }
   });
 
-  // ===== QUICK LINKS EDITOR =====
+  
   const defaultQuickLinks = [
     { name: "YouTube", icon: "fa-brands fa-youtube", url: "https://www.youtube.com" },
     { name: "Spotify", icon: "fa-brands fa-spotify", url: "https://open.spotify.com" },
@@ -694,7 +694,7 @@
       </div>
     `).join('');
 
-    // Add event listeners
+    
     document.querySelectorAll('.quick-link-input').forEach(input => {
       input.addEventListener('input', function() {
         const index = parseInt(this.getAttribute('data-index'));
@@ -724,7 +724,7 @@
 
   renderQuickLinks();
 
-  // ===== RANDOM CLOAK (SIDEBAR) =====
+  
   const cloakPresets = [
     { title: "Google", favicon: "https://www.google.com/favicon.ico" },
     { title: "Google Docs", favicon: "https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico" },
@@ -740,7 +740,7 @@
     localStorage.setItem('cloakFavicon', randomPreset.favicon);
   });
 
-  // ===== SUCCESS MESSAGE =====
+  
   function showSuccess(message) {
     const msg = document.getElementById('successMessage');
     msg.innerHTML = '<i class="fa-solid fa-check"></i> ' + message;
@@ -750,7 +750,7 @@
     }, 3000);
   }
 
-  // Apply saved font size on load
+  
   if(savedFontSize) {
     document.body.style.fontSize = savedFontSize + 'px';
   }

@@ -24,7 +24,7 @@
     .hp { background: linear-gradient(90deg, #38ef7d, #3a86ff); }
     .noise { background: linear-gradient(90deg, #ffb703, #fb8500); }
 
-    /* Menu overlay must sit above HUD/canvas and be clickable */
+    
     .center { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; background: radial-gradient(1000px 700px at 50% -10%, #16224a, transparent); pointer-events: auto; }
     .card { width: min(820px, 92vw); background: #0f1935e6; border: 1px solid #304071; border-radius: 18px; padding: 22px; box-shadow: 0 10px 40px #00000088; }
     .title { font-weight: 800; font-size: clamp(24px, 2.4vw + 16px, 42px); letter-spacing: .06em; text-transform: uppercase; margin: 0 0 8px; }
@@ -47,12 +47,12 @@
 
     .extract { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); background: #0f1935e6; border: 1px solid #304071; border-radius: 12px; padding: 8px 12px; font-size: 12px; color: var(--muted); display: none; }
 
-    /* z-index layering */
+    
     #menu { z-index: 50; }
     #mpModal { z-index: 60; }
     #optModal { z-index: 58; }
 
-    /* Click layering – keep canvas under overlays */
+    
     #gameWrap { position: fixed; inset: 0; z-index: 0; }
     .hud { z-index: 5; pointer-events: none; }
     #menu { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; pointer-events: auto; }
@@ -80,7 +80,7 @@
     <div class="legend">Controls: <code>WASD</code> move · <code>Mouse</code> aim · <code>LMB</code> shoot · <code>E</code> interact · Controller supported (sticks + RT + A)</div>
     <div id="extractMsg" class="extract">Extraction available! Reach the green zone.</div>
 
-    <!-- Menu outside HUD -->
+    
     <div id="menu" class="center">
       <div class="card">
         <h1 class="title">Task Force: Eclipse</h1>
@@ -100,7 +100,7 @@
     <div id="toast" class="toast" style="display:none"></div>
   </div>
 
-  <!-- ===== Multiplayer Modal (Manual WebRTC) ===== -->
+  
   <div id="mpModal" style="display:none; position:fixed; inset:0; background:#0008; backdrop-filter: blur(2px);">
     <div style="position:absolute; left:50%; top:50%; transform: translate(-50%,-50%); width:min(900px,92vw); background:#0f1935f0; border:1px solid #2a3f77; border-radius:16px; padding:16px;">
       <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:8px">
@@ -143,7 +143,7 @@
     </div>
   </div>
 
-  <!-- ===== Options Modal (CORRECT PLACE: outside <script>) ===== -->
+  
   <div id="optModal" style="display:none; position:fixed; inset:0; background:#0008; backdrop-filter: blur(2px); z-index:58;">
     <div style="position:absolute; left:50%; top:50%; transform: translate(-50%,-50%); width:min(720px,92vw); background:#0f1935f0; border:1px solid #2a3f77; border-radius:16px; padding:16px;">
       <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:8px">
@@ -200,10 +200,10 @@
     </div>
   </div>
 
-  <!-- ====== SCRIPT AFTER ALL DOM (so bindings never see nulls) ====== -->
+  
   <script>
   ;(() => {
-    // ================== SAFETY: GLOBAL ERROR TOAST ==================
+    
     window.addEventListener('error', (e)=>{
       const el = document.getElementById('toast');
       if (!el) return;
@@ -215,7 +215,7 @@
 
     const TAU = Math.PI * 2;
 
-    // ================== UTILITIES ==================
+    
     const rand = (a,b) => a + Math.random()*(b-a);
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
     const dist = (a,b) => Math.hypot(a.x-b.x, a.y-b.y);
@@ -226,9 +226,9 @@
       return true;
     };
 
-    // ================== PROC-GEN HELPERS ==================
+    
     function makeRNG(seed){
-      // Mulberry32
+      
       let t = seed >>> 0;
       return function(){
         t += 0x6D2B79F5;
@@ -245,7 +245,7 @@
     function rectInAny(walls, r){ for (const w of walls){ if (rectsOverlap(w,r)) return true; } return false; }
     function pointInAny(walls, x,y){ for (const w of walls){ if (pointInRect(x,y,w)) return true; } return false; }
 
-    // ================== GAME STATE ==================
+    
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
     const mini = document.getElementById('mini');
@@ -266,9 +266,9 @@
         { key:'DMR', name:'DMR-7', rpm:300, dmg:45, mag:15, reserve:45, reload:2.2, spread:0.012, speed:1100 }
       ],
       weaponIndex:0,
-      opts: { difficulty: 'Normal', intelCount: 1, mapSize: 'Standard' },  // <-- OPTIONS DEFAULTS
+      opts: { difficulty: 'Normal', intelCount: 1, mapSize: 'Standard' },  
       net: {
-        role: 'solo',        // 'solo' | 'host' | 'client'
+        role: 'solo',        
         pc: null,
         dc: null,
         connected: false,
@@ -278,7 +278,7 @@
       }
     };
 
-    // ================== MAP GEN ==================
+    
     function generateLevelLayout(){
       const walls = [];
       const safeStart = rect(0, H/2 - 140, 280, 280);
@@ -305,7 +305,7 @@
         walls.push(candidate);
       }
 
-      // Intel
+      
       const rng2 = makeRNG(seed ^ 0x9e3779b9);
       let intel = {x: state.world.w - 250, y: randi(rng2, 160, state.world.h-160), r:12, taken:false};
       for (let t=0; t<80; t++){
@@ -318,9 +318,9 @@
 
     function toast(msg, ms=2000){ const el = document.getElementById('toast'); if(!el) return; el.textContent=msg; el.style.display='block'; clearTimeout(el._t); el._t=setTimeout(()=>el.style.display='none', ms); }
 
-    // ======== APPLY OPTIONS + SETUP LEVEL ========
+    
     function setupLevel(){
-      // Map size
+      
       if (state.opts.mapSize === 'Small')       state.world = { w: 1600, h: 1000 };
       else if (state.opts.mapSize === 'Large')  state.world = { w: 2800, h: 1800 };
       else                                      state.world = { w: 2200, h: 1400 };
@@ -337,7 +337,7 @@
 
       state.extractZone = { x: 120, y: H/2 - 60, w: 160, h: 120, active:false };
 
-      // Difficulty multiplier
+      
       const d = state.opts.difficulty;
       const mul = d==='Easy' ? 0.8 : d==='Hard' ? 1.3 : 1.0;
 
@@ -360,7 +360,7 @@
       document.getElementById('extractMsg').style.display = 'none';
     }
 
-    // ================== INPUT ==================
+    
     const downKeys = new Set();
     window.addEventListener('keydown', e=>{
       downKeys.add(e.code);
@@ -383,7 +383,7 @@
     window.addEventListener('gamepaddisconnected', ()=>{ state.gp=null; toast('Controller disconnected'); });
     function readGamepad(){ if (state.gp==null) return null; return navigator.getGamepads()[state.gp]; }
 
-    // ================== NET (WebRTC) ==================
+    
     async function createPeer(role){
       const pc = new RTCPeerConnection({
         iceServers: [{ urls: ['stun:stun.l.google.com:19302','stun:global.stun.twilio.com:3478'] }]
@@ -482,7 +482,7 @@
       try{ await navigator.clipboard.writeText(sdp); toast('Answer copied to clipboard'); }catch{}
     }
 
-    // ================== PHYSICS / COLLISION ==================
+    
     function moveWithColliders(obj, vx, vy){
       const tryMove = (dx,dy)=>{
         obj.x += dx; obj.y += dy;
@@ -494,7 +494,7 @@
       tryMove(vx*state.dt, 0); tryMove(0, vy*state.dt);
     }
 
-    // ================== ENEMY AI ==================
+    
     function updateEnemy(e){
       const p1 = state.player, p2 = state.ally || state.player;
       const tgt = (!state.ally || Math.hypot(p1.x-e.x, p1.y-e.y) <= Math.hypot(p2.x-e.x, p2.y-e.y)) ? p1 : p2;
@@ -518,7 +518,7 @@
       }
     }
 
-    // ================== WEAPONS / SHOOTING / RELOAD ==================
+    
     function shootFrom(from, angle, friendly=true, weapon=null){
       const w = weapon || {speed:800, spread: friendly?0.035:0.06, dmg: friendly?32:15};
       const speed = w.speed; const spread = friendly ? (w.spread ?? 0.035) : 0.06; const dmg = friendly ? (w.dmg ?? 28) : 15;
@@ -565,12 +565,12 @@
       return Math.atan2((state.mouse.y + state.camera.y) - state.player.y, (state.mouse.x + state.camera.x) - state.player.x);
     }
 
-    // ================== GAME LOOP ==================
+    
     function step(ts){
       if (!state.running) return; requestAnimationFrame(step);
       state.dt = Math.min(0.033, (ts - state.last)/1000 || 0.016); state.last = ts; state.t += state.dt;
 
-      // INPUT
+      
       let ax=0, ay=0;
       if (state.keys.has('KeyW') || state.keys.has('ArrowUp')) ay -= 1;
       if (state.keys.has('KeyS') || state.keys.has('ArrowDown')) ay += 1;
@@ -587,19 +587,19 @@
         if (gp.buttons[0]?.pressed) tryInteract();
       }
 
-      // CLIENT: send inputs to host
+      
       if (state.net.role === 'client' && state.net.connected){
         sendJSON({type:'inp', inp:{ ax, ay, aim: aimAngle, shoot: !!state.mouse.down, interact: !!state.keys.has('KeyE') }});
       }
 
-      // PLAYER UPDATE
+      
       const p = state.player; if (!p) return;
       const mag = Math.hypot(ax,ay) || 1; const vx = (ax/mag)*p.speed; const vy = (ay/mag)*p.speed;
       moveWithColliders(p, vx, vy);
 
       p.dir = aimAngle; if (state.mouse.down) tryShoot(p.dir);
 
-      // HOST: drive ally from client inputs
+      
       if (state.net.role === 'host' && state.net.connected && state.ally){
         const i = state.net.clientInp; const a = state.ally;
         const mag2 = Math.hypot(i.ax, i.ay) || 1; const vx2=(i.ax/mag2)*a.speed, vy2=(i.ay/mag2)*a.speed;
@@ -611,7 +611,7 @@
         a.fireCd = Math.max(0, a.fireCd - state.dt);
       }
 
-      // Timers
+      
       if (p.reloading){
         p.reloadT -= state.dt; const w = state.weapons[state.weaponIndex];
         const elapsed = w.reload - Math.max(0,p.reloadT);
@@ -622,7 +622,7 @@
 
       const isClient = (state.net.role === 'client' && state.net.connected);
       if (!isClient){
-        // Bullets
+        
         for (let i=state.bullets.length-1;i>=0;i--){
           const b = state.bullets[i]; b.life -= state.dt; if (b.life<=0){ state.bullets.splice(i,1); continue; }
           b.x += b.vx*state.dt; b.y += b.vy*state.dt;
@@ -637,19 +637,19 @@
           }
         }
 
-        // Enemies
+        
         for (const e of state.enemies) updateEnemy(e);
 
-        // Intel
+        
         if (!state.intel.taken && dist(p, state.intel) < p.r + state.intel.r){ state.intel.taken=true; p.hasIntel=true; document.getElementById('intelText').textContent = `1 / 1`; state.extractZone.active=true; document.getElementById('extractMsg').style.display='block'; toast('Intel secured. Head to extract!'); }
 
-        // Extract
+        
         if (state.extractZone.active && p.x>state.extractZone.x && p.x<state.extractZone.x+state.extractZone.w && p.y>state.extractZone.y && p.y<state.extractZone.y+state.extractZone.h){ if (p.hasIntel) gameOver(true); }
 
-        // Noise
+        
         state.noise = Math.max(0, state.noise - state.dt*0.15);
 
-        // Camera with deadzone
+        
         const DZ_W = W * 0.45, DZ_H = H * 0.45;
         const dzLeft = state.camera.x + (W - DZ_W)/2;
         const dzRight = dzLeft + DZ_W;
@@ -663,17 +663,17 @@
         clampCam();
       }
 
-      // Render
+      
       const mouseWorld = { x: state.mouse.x + state.camera.x, y: state.mouse.y + state.camera.y };
       const hasLOS = lineOfSight(p, mouseWorld, state.walls);
       draw(hasLOS);
 
-      // HUD
+      
       document.getElementById('hpBar').style.width = clamp(p.hp,0,100) + '%';
       document.getElementById('noiseBar').style.width = Math.round(state.noise*100) + '%';
       document.getElementById('enemyText').textContent = state.enemies.length.toString();
 
-      // HOST: periodic snapshot to client
+      
       if (state.net.role === 'host' && state.net.connected){
         state.net.snapTimer += state.dt;
         if (state.net.snapTimer > 0.1){ sendJSON(makeSnapshot()); state.net.snapTimer = 0; }
@@ -684,37 +684,37 @@
       const cam = state.camera; ctx.clearRect(0,0,W,H);
       ctx.save(); ctx.translate(-cam.x, -cam.y);
 
-      // Grid
+      
       ctx.fillStyle = '#0a122b'; ctx.fillRect(cam.x, cam.y, W, H);
       ctx.strokeStyle = '#0f1a3a'; ctx.lineWidth = 1;
       for (let x=0; x<state.world.w; x+=40){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,state.world.h); ctx.stroke(); }
       for (let y=0; y<state.world.h; y+=40){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(state.world.w,y); ctx.stroke(); }
 
-      // Walls
+      
       ctx.fillStyle = '#15214a'; ctx.strokeStyle = '#29408a';
       for (const w of state.walls){ ctx.fillRect(w.x,w.y,w.w,w.h); ctx.strokeRect(w.x+0.5,w.y+0.5,w.w-1,w.h-1); }
 
-      // Extract zone
+      
       if (state.extractZone.active){ const z = state.extractZone; ctx.fillStyle = 'rgba(0,255,120,0.12)'; ctx.fillRect(z.x, z.y, z.w, z.h); ctx.strokeStyle = '#3cff95'; ctx.strokeRect(z.x+0.5, z.y+0.5, z.w-1, z.h-1); }
 
-      // Intel
+      
       if (!state.intel.taken){ ctx.beginPath(); ctx.arc(state.intel.x, state.intel.y, state.intel.r, 0, TAU); ctx.fillStyle = '#3bd1ff'; ctx.fill(); ctx.strokeStyle = '#7be0ff'; ctx.stroke(); }
 
-      // Bullets
+      
       ctx.strokeStyle = '#a6bfff'; ctx.lineWidth = 2;
       for (const b of state.bullets){ ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(b.x - b.vx*0.02, b.y - b.vy*0.02); ctx.stroke(); }
 
-      // Player & Enemies
+      
       const p = state.player; drawSoldier(p.x, p.y, p.dir, '#7cff6b');
       if (state.ally){ drawSoldier(state.ally.x, state.ally.y, state.ally.dir, '#6bd1ff'); }
       for (const e of state.enemies){ drawSoldier(e.x, e.y, e.angle, '#ff6b6b'); }
 
       ctx.restore();
 
-      // Minimap
+      
       drawMinimap();
 
-      // Crosshair in screen space
+      
       const cx = state.mouse.x, cy = state.mouse.y; ctx.save(); ctx.translate(cx, cy);
       ctx.strokeStyle = hasLOS ? '#7cff6b' : '#ff6b6b'; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(-10,0); ctx.lineTo(-2,0); ctx.moveTo(2,0); ctx.lineTo(10,0); ctx.moveTo(0,-10); ctx.lineTo(0,-2); ctx.moveTo(0,2); ctx.lineTo(0,10); ctx.stroke();
@@ -739,13 +739,13 @@
 
     function gameOver(won){ state.running=false; state.won=won; document.getElementById('menu').style.display='grid'; const t=document.querySelector('#menu .subtitle'); t.innerHTML = won? 'Extraction complete. Mission success. <strong>Play again?</strong>':'You were neutralized. <strong>Retry?</strong>'; }
 
-    // ================== UI BINDINGS (null-safe) ==================
+    
     (function bindUI(){
       const $ = id => document.getElementById(id);
       const show = id => { const el = $(id); if (el) el.style.display = 'block'; };
       const hide = id => { const el = $(id); if (el) el.style.display = 'none'; };
 
-      // Central actions
+      
       const actions = {
         startBtn: () => {
           setupLevel();
@@ -778,13 +778,13 @@
         },
       };
 
-      // Attach directly if element exists
+      
       for (const id in actions) {
         const el = $(id);
         if (el) el.addEventListener('click', (e)=>{ e.preventDefault(); actions[id](); });
       }
 
-      // Delegated fallback
+      
       document.addEventListener('click', (e)=>{
         const el = e.target.closest('#startBtn,#howBtn,#gpBtn,#mpBtn,#mpClose,#hostCreate,#hostCopy,#hostConnect,#joinCreate,#joinCopy');
         if (!el) return;
@@ -792,12 +792,12 @@
         if (fn) { e.preventDefault(); fn(); }
       }, true);
 
-      // ---- Expose legacy helpers for inline onclick ----
+      
       window.__startGame = actions.startBtn;
       window.__openMP   = actions.mpBtn;
     })();
 
-    // ===== Options helpers (global) =====
+    
     window.__openOpts = function(){
       const m=document.getElementById('optModal'); if(m) m.style.display='block';
       const o=state.opts;
@@ -815,19 +815,19 @@
       window.__optsClose();
     };
 
-    // ================== DEV TESTS ==================
+    
     function runTests(){
       const results = [];
       function t(name, fn){ try{ fn(); results.push(['PASS', name]); } catch(err){ console.error(err); results.push(['FAIL', name+': '+err.message]); } }
 
-      // Test 1: reload math
+      
       t('Reload fills up to mag and reduces reserve', ()=>{
         const w = {mag:30}; const a = {mag:12, reserve:17};
         const needed = w.mag - a.mag; const take = Math.min(needed, a.reserve);
         if (take !== 17) throw new Error('expected take=17');
       });
 
-      // Test 2: aim angle world-space
+      
       t('Aim computed in world space accounts for camera', ()=>{
         state.camera.x = 100; state.camera.y = 50; state.player = {x:200,y:200}; state.mouse = {x:100,y:150};
         const ang = computeAimAngle();
@@ -836,7 +836,7 @@
         if (Math.abs(Math.atan2(dy,dx) - ang) > 1e-9) throw new Error('angle mismatch');
       });
 
-      // Test 3: move clamps world bounds (start in-bounds, then push past)
+      
       t('moveWithColliders clamps to world (no unintended left move when starting in-bounds)', ()=>{
         const obj = { x: state.world.w - 20, y: state.world.h - 20, r: 14 };
         const beforeX = obj.x;
@@ -848,7 +848,7 @@
         if (obj.x < beforeX) throw new Error('unexpected left move');
       });
 
-      // Test 4: shootFrom adds bullet
+      
       t('shootFrom spawns bullet + noise', ()=>{
         const bulletsBefore = state.bullets.length; const n0 = state.noise;
         shootFrom({x:10,y:10,r:5}, 0, true, {speed:800, spread:0, dmg:10});
@@ -861,7 +861,7 @@
       else { console.log('All tests passed'); }
     }
 
-    // Boot once so minimap renders; tests run once
+    
     setupLevel(); runTests(); (function firstDraw(){ const p=state.player; if(!p) return; const mouseWorld={x:state.mouse.x+state.camera.x,y:state.mouse.y+state.camera.y}; draw(lineOfSight(p, mouseWorld, state.walls)); })();
 
   })();

@@ -13,78 +13,10 @@ const scramjet = new ScramjetServiceWorker();
 const CONFIG = {
 	blocked: [
 		"youtube.com/get_video_info?*adformat=*",
-		"youtube.com/api/stats/ads/*",
-		"youtube.com/pagead/*",
-		".facebook.com/ads/*",
-		".facebook.com/tr/*",
-		".fbcdn.net/ads/*",
-		"graph.facebook.com/ads/*",
-		"ads-api.twitter.com/*",
-		"analytics.twitter.com/*",
-		".twitter.com/i/ads/*",
-		".ads.yahoo.com",
-		".advertising.com",
-		".adtechus.com",
-		".oath.com",
-		".verizonmedia.com",
-		".amazon-adsystem.com",
-		"aax.amazon-adsystem.com/*",
-		"c.amazon-adsystem.com/*",
-		".adnxs.com",
-		".adnxs-simple.com",
-		"ab.adnxs.com/*",
-		".rubiconproject.com",
-		".magnite.com",
-		".pubmatic.com",
-		"ads.pubmatic.com/*",
-		".criteo.com",
-		"bidder.criteo.com/*",
-		"static.criteo.net/*",
-		".openx.net",
-		".openx.com",
-		".indexexchange.com",
-		".casalemedia.com",
-		".adcolony.com",
-		".chartboost.com",
-		".unityads.unity3d.com",
-		".inmobiweb.com",
-		".tapjoy.com",
-		".applovin.com",
-		".vungle.com",
-		".ironsrc.com",
-		".fyber.com",
-		".smaato.net",
-		".supersoniads.com",
-		".startappservice.com",
-		".airpush.com",
-		".outbrain.com",
-		".taboola.com",
-		".revcontent.com",
-		".zedo.com",
-		".mgid.com",
-		"*/ads/*",
-		"*/adserver/*",
-		"*/adclick/*",
-		"*/banner_ads/*",
-		"*/sponsored/*",
-		"*/promotions/*",
-		"*/tracking/ads/*",
-		"*/promo/*",
-		"*/affiliates/*",
-		"*/partnerads/*",
-	],
-	inject: {
-		html: "\x3c!-- pr0x1ed by vapor's static sj --\x3e",
-	},
-};
-
-/** @type {{ origin: string, html: string, css: string, js: string } | undefined} */
+		"youtube.com/api/stats/adsadsadserveradclickbanner_adssponsoredpromotionstracking/adspromoaffiliatespartnerads
 let playgroundData;
 
-/**
- * @param {string} pattern
- * @returns {RegExp}
- */
+
 function toRegex(pattern) {
 	const escaped = pattern
 		.replace(/[.+?^${}()|[\]\\]/g, "\\$&")
@@ -94,11 +26,7 @@ function toRegex(pattern) {
 	return new RegExp(`^${escaped}$`);
 }
 
-/**
- * @param {string} hostname
- * @param {string} pathname
- * @returns {boolean}
- */
+
 function isBlocked(hostname, pathname) {
 	return CONFIG.blocked.some((pattern) => {
 		if (pattern.startsWith("#")) {
@@ -120,18 +48,12 @@ function isBlocked(hostname, pathname) {
 	});
 }
 
-/**
- * @param {string} html
- * @returns {string}
- */
+
 function inject(html) {
 	return html.replace(/<head[^>]*>/i, (match) => `${match}${CONFIG.inject.html}`);
 }
 
-/**
- * @param {FetchEvent} event
- * @returns {Promise<Response>}
- */
+
 async function handleRequest(event) {
 	await scramjet.loadConfig();
 

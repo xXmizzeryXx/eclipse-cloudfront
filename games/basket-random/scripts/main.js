@@ -290,7 +290,7 @@
 			if (e.g_aZq) this.g_apn = e.g_aZq;
 			else {
 				const e = location.origin;
-				this.g_apn = ('null' === e ? 'file:///' : e) + location.pathname;
+				this.g_apn = ('null' === e ? 'file:/
 				const g = this.g_apn.lastIndexOf('/');
 				-1 !== g && (this.g_apn = this.g_apn.substr(0, g + 1));
 			}
@@ -600,7 +600,7 @@
 		}
 		g_fZ(e) {
 			return (
-				/^(?:[a-z]+:)?\/\//.test(e) || 'data:' === e.substr(0, 5) || 'blob:' === e.substr(0, 5)
+				/^(?:[a-z]+:)?\/\
 			);
 		}
 		g_f_(e) {
