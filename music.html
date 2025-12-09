@@ -23,6 +23,20 @@
     .side-item .meta{display:flex;flex-direction:column;flex:1;min-width:0;margin-right:8px}
     .btn{background:transparent;border:2px solid #b88640;color:#b88640;padding:6px 10px;border-radius:8px;cursor:pointer}
     .btn.small{padding:4px 8px;font-size:12px}
+    /* Custom player controls */
+    .player-card{box-shadow:0 6px 20px rgba(0,0,0,0.4)}
+    .player-controls{display:flex;align-items:center;gap:12px}
+    .control-btn{background:transparent;border:2px solid #b88640;color:#b88640;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:16px}
+    .progress-wrap{flex:1;display:flex;flex-direction:column;gap:6px}
+    #progress{width:100%;accent-color:#b88640;background:transparent}
+    .time{font-size:12px;color:#bdb1a0;text-align:right}
+    .vol-wrap{display:flex;align-items:center}
+    #volume{width:100px;accent-color:#b88640}
+    /* style range for consistency */
+    input[type=range]{-webkit-appearance:none;appearance:none;background:transparent}
+    input[type=range]::-webkit-slider-runnable-track{height:6px;background:#24180f;border-radius:6px}
+    input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:#b88640;border-radius:50%;margin-top:-4px}
+    input[type=range]:focus{outline:none}
   </style>
 </head>
 <body>
@@ -61,7 +75,22 @@
 
         <div id="playerContainer" style="margin-top:24px; display:flex; gap:16px; align-items:flex-start;">
           <div style="flex:1; display:flex; flex-direction:column; gap:12px;">
-              <audio id="audioPlayer" controls style="width:100%; border-radius:12px; background:#1e160b; display:block;"></audio>
+              <audio id="audioPlayer" style="width:100%; border-radius:12px; background:#1e160b; display:none;"></audio>
+
+              <div class="player-card" style="background:#1e160b;border-radius:12px;padding:12px;">
+                <div class="player-controls" id="playerControls">
+                  <button class="control-btn" id="playPauseBtn" title="Play"><i class="fa-solid fa-play"></i></button>
+                  <div class="progress-wrap">
+                    <input type="range" id="progress" min="0" max="100" value="0">
+                    <div class="time"><span id="currentTime">0:00</span> / <span id="duration">0:00</span></div>
+                  </div>
+                  <div class="vol-wrap">
+                    <i class="fa-solid fa-volume-high" style="color:#bdb1a0;margin-right:8px;"></i>
+                    <input type="range" id="volume" min="0" max="1" step="0.01" value="1">
+                  </div>
+                </div>
+              </div>
+
             <div id="uploadHint" style="color:#bdb1a0;font-size:13px">You can also drag & drop MP3 files here.</div>
           </div>
 
@@ -215,6 +244,7 @@
       currentIndex = index;
       audioPlayer.src = t.url;
       audioPlayer.play().catch(()=>{});
+      updatePlayButton(true);
       [...playlistEl.querySelectorAll('.side-item')].forEach((r, i) => r.classList.toggle('active', i===index));
     }
 
@@ -239,11 +269,72 @@
       const trimmed = newName.trim();
       if (trimmed.length === 0) return alert('Name cannot be empty');
       playlist[index].name = trimmed;
-      // update DB record name too
-      saveBlobToDB(t.id, trimmed, null).catch(()=>{}); // if blob null, put will still update name if record exists
+      // update DB record name too (read record and update name safely)
+      openDB().then(db => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        const req = store.get(t.id);
+        req.onsuccess = () => {
+          const rec = req.result || { id: t.id, name: trimmed };
+          rec.name = trimmed;
+          store.put(rec);
+        };
+      }).catch(()=>{});
       renderPlaylist();
       savePlaylistToStorage();
     }
+
+    // Custom player control wiring
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const progressEl = document.getElementById('progress');
+    const currentTimeEl = document.getElementById('currentTime');
+    const durationEl = document.getElementById('duration');
+    const volumeEl = document.getElementById('volume');
+
+    function formatTime(sec){
+      if (!sec || isNaN(sec)) return '0:00';
+      const s = Math.floor(sec%60).toString().padStart(2,'0');
+      const m = Math.floor(sec/60);
+      return `${m}:${s}`;
+    }
+
+    function updatePlayButton(isPlaying){
+      const ic = playPauseBtn.querySelector('i');
+      if (!ic) return;
+      ic.className = isPlaying ? 'fa-solid fa-pause' : 'fa-solid fa-play';
+      playPauseBtn.title = isPlaying ? 'Pause' : 'Play';
+    }
+
+    playPauseBtn.addEventListener('click', ()=>{
+      if (audioPlayer.paused) {
+        audioPlayer.play().catch(()=>{});
+        updatePlayButton(true);
+      } else {
+        audioPlayer.pause();
+        updatePlayButton(false);
+      }
+    });
+
+    audioPlayer.addEventListener('timeupdate', ()=>{
+      if (!audioPlayer.duration) return;
+      const pct = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+      progressEl.value = pct;
+      currentTimeEl.textContent = formatTime(audioPlayer.currentTime);
+    });
+
+    audioPlayer.addEventListener('loadedmetadata', ()=>{
+      durationEl.textContent = formatTime(audioPlayer.duration);
+    });
+
+    audioPlayer.addEventListener('ended', ()=>{ updatePlayButton(false); });
+
+    progressEl.addEventListener('input', (e)=>{
+      if (!audioPlayer.duration) return;
+      const pct = Number(e.target.value);
+      audioPlayer.currentTime = (pct/100) * audioPlayer.duration;
+    });
+
+    volumeEl.addEventListener('input', (e)=>{ audioPlayer.volume = Number(e.target.value); });
 
     // wire inputs
     fileInput.addEventListener('change', (e)=> addFiles(e.target.files));
