@@ -118,14 +118,37 @@
         a.innerHTML = `<div class="meta"><div class="name">${p.name}</div><div class="cat">Uploaded</div></div>`;
         a.addEventListener('click', (e)=>{ e.preventDefault(); playTrack(i); });
 
+        const controlsWrap = document.createElement('div');
+        controlsWrap.style.display = 'flex';
+        controlsWrap.style.gap = '8px';
+
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn small';
+        editBtn.textContent = 'Edit';
+        editBtn.title = 'Rename track';
+        editBtn.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); renameTrack(i); });
+
         const removeBtn = document.createElement('button');
         removeBtn.className = 'btn small';
         removeBtn.textContent = 'Remove';
         removeBtn.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); removeTrack(i); });
 
-        a.appendChild(removeBtn);
+        controlsWrap.appendChild(editBtn);
+        controlsWrap.appendChild(removeBtn);
+        a.appendChild(controlsWrap);
         playlistEl.appendChild(a);
       });
+    }
+
+    function renameTrack(index){
+      const t = playlist[index];
+      if (!t) return;
+      const newName = prompt('Rename track', t.name);
+      if (newName === null) return; // cancelled
+      const trimmed = newName.trim();
+      if (trimmed.length === 0) return alert('Name cannot be empty');
+      playlist[index].name = trimmed;
+      renderPlaylist();
     }
 
     function playTrack(index){
