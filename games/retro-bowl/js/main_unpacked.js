@@ -1283,9 +1283,9 @@ var _72 = {
     _L9: [
         {
             _M9:
-                "#define LOWPREC lowp\n#define	MATRIX_VIEW 					0\n#define	MATRIX_PROJECTION 				1\n#define	MATRIX_WORLD 					2\n#define	MATRIX_WORLD_VIEW 				3\n#define	MATRIX_WORLD_VIEW_PROJECTION 	4\n#define	MATRICES_MAX					5\n\nuniform mat4 gm_Matrices[MATRICES_MAX]; \n\nuniform bool gm_LightingEnabled;\nuniform bool gm_VS_FogEnabled;\nuniform float gm_FogStart;\nuniform float gm_RcpFogRange;\n\n#define MAX_VS_LIGHTS	8\n#define MIRROR_WIN32_LIGHTING_EQUATION\n\n\n
+                "#define LOWPREC lowp\n#define	MATRIX_VIEW 					0\n#define	MATRIX_PROJECTION 				1\n#define	MATRIX_WORLD 					2\n#define	MATRIX_WORLD_VIEW 				3\n#define	MATRIX_WORLD_VIEW_PROJECTION 	4\n#define	MATRICES_MAX					5\n\nuniform mat4 gm_Matrices[MATRICES_MAX]; \n\nuniform bool gm_LightingEnabled;\nuniform bool gm_VS_FogEnabled;\nuniform float gm_FogStart;\nuniform float gm_RcpFogRange;\n\n#define MAX_VS_LIGHTS	8\n#define MIRROR_WIN32_LIGHTING_EQUATION\n\n\n//#define	MAX_VS_LIGHTS					8\nuniform vec4   gm_AmbientColour;							// rgb=colour, a=1\nuniform vec4   gm_Lights_Direction[MAX_VS_LIGHTS];		// normalised direction\nuniform vec4   gm_Lights_PosRange[MAX_VS_LIGHTS];			// X,Y,Z position,  W range\nuniform vec4   gm_Lights_Colour[MAX_VS_LIGHTS];			// rgb=colour, a=1\n\nfloat CalcFogFactor(vec4 pos)\n{\n	if (gm_VS_FogEnabled)\n	{\n		vec4 viewpos = gm_Matrices[MATRIX_WORLD_VIEW] * pos;\n		float fogfactor = ((viewpos.z - gm_FogStart) * gm_RcpFogRange);\n		return fogfactor;\n	}\n	else\n	{\n		return 0.0;\n	}\n}\n\nvec4 DoDirLight(vec3 ws_normal, vec4 dir, vec4 diffusecol)\n{\n	float dotresult = dot(ws_normal, dir.xyz);\n	dotresult = max(0.0, dotresult);\n\n	return dotresult * diffusecol;\n}\n\nvec4 DoPointLight(vec3 ws_pos, vec3 ws_normal, vec4 posrange, vec4 diffusecol)\n{\n	vec3 diffvec = ws_pos - posrange.xyz;\n	float veclen = length(diffvec);\n	diffvec /= veclen;	// normalise\n#ifdef MIRROR_WIN32_LIGHTING_EQUATION\n	// This is based on the Win32 D3D and OpenGL falloff model, where:\n	// Attenuation = 1.0f / (factor0 + (d * factor1) + (d*d * factor2))\n	// For some reason, factor0 is set to 0.0f while factor1 is set to 1.0f/lightrange (on both D3D and OpenGL)\n	// This'll result in no visible falloff as 1.0f / (d / lightrange) will always be larger than 1.0f (if the vertex is within range)\n	float atten = 1.0 / (veclen / posrange.w);\n	if (veclen > posrange.w)\n	{\n		atten = 0.0;\n	}\n#else\n	float atten = clamp( (1.0 - (veclen / posrange.w)), 0.0, 1.0);		// storing 1.0f/range instead would save a rcp\n#endif\n	float dotresult = dot(ws_normal, diffvec);\n	dotresult = max(0.0, dotresult);\n\n	return dotresult * atten * diffusecol;\n}\n\nvec4 DoLighting(vec4 vertexcolour, vec4 objectspacepos, vec3 objectspacenormal)\n{\n	if (gm_LightingEnabled)\n	{\n		// Normally we'd have the light positions\\directions back-transformed from world to object space\n		// But to keep things simple for the moment we'll just transform the normal to world space\n		vec4 objectspacenormal4 = vec4(objectspacenormal, 0.0);\n		vec3 ws_normal;\n		ws_normal = (gm_Matrices[MATRIX_WORLD_VIEW] * objectspacenormal4).xyz;\n		ws_normal = -normalize(ws_normal);\n\n		vec3 ws_pos;\n		ws_pos = (gm_Matrices[MATRIX_WORLD] * objectspacepos).xyz;\n\n		// Accumulate lighting from different light types\n		vec4 accumcol = vec4(0.0, 0.0, 0.0, 0.0);		\n		for(int i = 0; i < MAX_VS_LIGHTS; i++)\n		{\n			accumcol += DoDirLight(ws_normal, gm_Lights_Direction[i], gm_Lights_Colour[i]);\n		}\n\n		for(int i = 0; i < MAX_VS_LIGHTS; i++)\n		{\n			accumcol += DoPointLight(ws_pos, ws_normal, gm_Lights_PosRange[i], gm_Lights_Colour[i]);\n		}\n\n		accumcol *= vertexcolour;\n		accumcol += gm_AmbientColour;\n		accumcol = min(vec4(1.0, 1.0, 1.0, 1.0), accumcol);\n		accumcol.a = vertexcolour.a;\n		return accumcol;\n	}\n	else\n	{\n		return vertexcolour;\n	}\n}\n\n#define _YY_GLSLES_ 1\n//\n// Simple passthrough vertex shader\n//\nattribute vec3 in_Position;                  // (x,y,z)\n//attribute vec3 in_Normal;                  // (x,y,z)     unused in this shader.\nattribute vec4 in_Colour;                    // (r,g,b,a)\nattribute vec2 in_TextureCoord;              // (u,v)\n\nvarying vec2 v_vTexcoord;\nvarying vec4 v_vColour;\n\nvoid main()\n{\n    vec4 object_space_pos = vec4( in_Position.x, in_Position.y, in_Position.z, 1.0);\n    gl_Position = gm_Matrices[MATRIX_WORLD_VIEW_PROJECTION] * object_space_pos;\n    \n    v_vColour = in_Colour;\n    v_vTexcoord = in_TextureCoord;\n}\n",
             _N9:
-                "precision mediump float;\n#define LOWPREC lowp\n
+                "precision mediump float;\n#define LOWPREC lowp\n// Uniforms look like they're shared between vertex and fragment shaders in GLSL, so we have to be careful to avoid name clashes\n\nuniform sampler2D gm_BaseTexture;\n\nuniform bool gm_PS_FogEnabled;\nuniform vec4 gm_FogColour;\nuniform bool gm_AlphaTestEnabled;\nuniform float gm_AlphaRefValue;\n\nvoid DoAlphaTest(vec4 SrcColour)\n{\n	if (gm_AlphaTestEnabled)\n	{\n		if (SrcColour.a <= gm_AlphaRefValue)\n		{\n			discard;\n		}\n	}\n}\n\nvoid DoFog(inout vec4 SrcColour, float fogval)\n{\n	if (gm_PS_FogEnabled)\n	{\n		SrcColour = mix(SrcColour, gm_FogColour, clamp(fogval, 0.0, 1.0)); \n	}\n}\n\n#define _YY_GLSLES_ 1\nvarying vec2 v_vTexcoord;\n\nuniform vec3 colorHelmet;\nuniform vec3 colorShirt;\nuniform vec3 colorShirt_b;\nuniform vec3 colorPants;\nuniform vec3 colorPants_b;\nuniform vec3 colorSkin;\nuniform vec3 colorCleats;\n\nuniform vec3 replaceHelmet;\nuniform vec3 replaceShirt;\nuniform vec3 replaceShirt_b;\nuniform vec3 replacePants;\nuniform vec3 replacePants_b;\nuniform vec3 replaceSkin;\nuniform vec3 replaceCleats;\n\nvoid main()\n{\n	vec4 pixel = texture2D( gm_BaseTexture, v_vTexcoord );\n	vec3 eps = vec3(0.009, 0.009, 0.009);\n\n	if( all( greaterThanEqual(pixel, vec4(colorHelmet - eps, 1.0)) ) && all( lessThanEqual(pixel, vec4(colorHelmet + eps, 1.0)) ) )\n		pixel = vec4(replaceHelmet, 1.0);\n	\n	if( all( greaterThanEqual(pixel, vec4(colorShirt - eps, 1.0)) ) && all( lessThanEqual(pixel, vec4(colorShirt + eps, 1.0)) ) )\n		pixel = vec4(replaceShirt, 1.0);\n		\n	if( all( greaterThanEqual(pixel, vec4(colorShirt_b - eps, 1.0)) ) && all( lessThanEqual(pixel, vec4(colorShirt_b + eps, 1.0)) ) )\n		pixel = vec4(replaceShirt_b, 1.0);\n		\n	if( all( greaterThanEqual(pixel, vec4(colorPants - eps, 1.0)) ) && all( lessThanEqual(pixel, vec4(colorPants + eps, 1.0)) ) )\n		pixel = vec4(replacePants, 1.0);\n		\n	if( all( greaterThanEqual(pixel, vec4(colorPants_b - eps, 1.0)) ) && all( lessThanEqual(pixel, vec4(colorPants_b + eps, 1.0)) ) )\n		pixel = vec4(replacePants_b, 1.0);\n		\n	if( all( greaterThanEqual(pixel, vec4(colorSkin - eps, 1.0)) ) && all( lessThanEqual(pixel, vec4(colorSkin + eps, 1.0)) ) )\n		pixel = vec4(replaceSkin, 1.0);\n		\n	if( all( greaterThanEqual(pixel, vec4(colorCleats - eps, 1.0)) ) && all( lessThanEqual(pixel, vec4(colorCleats + eps, 1.0)) ) )\n		pixel = vec4(replaceCleats, 1.0);\n\n	gl_FragColor = pixel;\n}\n\n\n/*  sh_ColorReplaceBlend\n//\n//      Replaces one color with another. Can replace \n//      similar colors while preserving shading.\n//\n//      colorIn             color to replace (vec4)\n//      colorOut            replacement color (vec4)\n//\n//  GMLscripts.com\n//\nvarying vec2 v_vTexcoord;\nvarying vec4 v_vColour;\n\nuniform vec4  colorIn;\nuniform vec4  colorOut;\n\nvoid main()\n{\n	vec4 colorPixel = texture2D( gm_BaseTexture, v_vTexcoord );\n	\n    if (colorPixel.r == 255.0)\n	{\n	    gl_FragColor = v_vColour * colorOut;\n	}\n	else\n	{\n		gl_FragColor = v_vColour * colorPixel;\n	}\n}\n\n/*\n// Simple passthrough fragment shader\n//\nvarying vec2 v_vTexcoord;\nvarying vec4 v_vColour;\nuniform float pixelW;\nuniform float pixelH;\n\nvoid main()\n{\n	vec2 offsetx;\n	offsetx.x = pixelW;\n	vec2 offsety;\n	offsety.y = pixelH;\n	\n	float alpha = texture2D( gm_BaseTexture, v_vTexcoord ).a;\n	\n	alpha = max(alpha, texture2D( gm_BaseTexture, v_vTexcoord + offsetx ).a);\n	alpha = max(alpha, texture2D( gm_BaseTexture, v_vTexcoord - offsetx ).a);\n	alpha = max(alpha, texture2D( gm_BaseTexture, v_vTexcoord + offsety ).a);\n	alpha = max(alpha, texture2D( gm_BaseTexture, v_vTexcoord - offsetx ).a);\n	\n    gl_FragColor = v_vColour * texture2D( gm_BaseTexture, v_vTexcoord );\n	gl_FragColor.a = alpha;\n}\n*/\n",
             _O9: ["in_Position", "in_Colour", "in_TextureCoord"],
         },
     ],
@@ -6113,7 +6113,7 @@ function _t4(_3l, _4l) {
 function _u4(_3l, _4l) {
     _X7(_3l, _4l);
     _U5(_3l, _4l, 1);
-} 
+} // 	if (year == 1 or string_count("@", msg))
 function _v4(_3l, _4l) {
     {
         var _mq = _8l(42);
@@ -8717,7 +8717,7 @@ function _a5(_3l, _4l) {
     }
     _xr(_pr);
     return _xn;
-} 
+} // 	//	slog ("adding fix: "+string(map[? "week"])+":"+string(map[? "away_team"])+"@"+string(map[? "home_team"]));
 function _b5(_3l, _4l) {
     var _xn = _yl();
     var _pr = _qr("Schedule.txt");
@@ -8774,7 +8774,7 @@ function _c5(_3l, _4l, _5l) {
         }
     }
     return _ru;
-} 
+} // 	//	slog ("Week: "+string(fix[? "week"])+" team "+string(team_id1)+" @ "+string(team_id2));
 function _d5(_3l, _4l) {
     _A9(_3l, _4l, "s_create_my_fixture_list");
     var _uu = _yl();
@@ -8816,7 +8816,7 @@ function _d5(_3l, _4l) {
         }
     }
     return _uu;
-} 
+} // slog("create fixture "+string(away_id)+" @ "+string(home_id));
 function _e5(_3l, _4l, _5l, _Bq, _Cq, _zu) {
     var _xn = _5l;
     var _Au = _Bq;
@@ -22866,8 +22866,8 @@ function _P8(_3l, _4l) {
         }
     }
     return 0;
-} 
-
+} // if (key == "@") return "";
+// if (is_undefined(txt)) {slog("@"+key); return "@"+key;}
 function _Q8(_3l, _4l, _5l) {
     var _eQ = _5l;
     if (yyfequal(_eQ, "@")) {
@@ -23923,7 +23923,7 @@ function _i9(_3l, _4l, _5l) {
     _vl(_Cm, "tla", "-");
     _A9(_3l, _4l, "RETURN DUMMY TEAM!");
     return _Cm;
-} 
+} // slog ("Team "+string(teamid_away)+" @ Team "+string(teamid_home));
 function _j9(_3l, _4l) {
     var _zq = _p5(_3l, _4l);
     var _4R = _il(_zq, "away_team");
@@ -26722,7 +26722,7 @@ function _Ob(_3l, _4l) {
     _HU(yyfplus(yyfplus(_sl(_3l.x), 24), _sl(_bT)), yyfplus(_sl(_3l.y), 8), yyfplus(yyfplus(_sl(_3l.x), 24), _sl(_bT)), yyfplus(_sl(_3l.y), 24), 2, 0, 0);
     _HU(yyfplus(yyfplus(_sl(_3l.x), 24), _sl(yyftime(_sl(_bT), 2))), yyfplus(_sl(_3l.y), 8), yyfplus(yyfplus(_sl(_3l.x), 24), _sl(yyftime(_sl(_bT), 2))), yyfplus(_sl(_3l.y), 24), 2, 0, 0);
     _hL(_3l, 73, 0, yyfplus(_sl(_3l.x), 14), yyfplus(_sl(_3l.y), 16));
-} 
+} // /// @description Insert description here
 function _Pb(_3l, _4l) {}
 function _Qb(_3l, _4l) {
     _DS(_3l, _4l);
@@ -29564,7 +29564,7 @@ function _3e(_3l, _4l) {
 }
 function _4e(_3l, _4l) {
     _DS(_3l, _4l);
-} 
+} // /// @description Insert description here
 function _5e(_3l, _4l) {}
 function _6e(_3l, _4l) {
     _DS(_3l, _4l);
@@ -32637,7 +32637,7 @@ function _lg(_3l, _4l) {
 function _mg(_3l, _4l) {
     _3l._mm = _Q8(_3l, _3l, "ui_FaveTeamNote");
     _3l._5T = 0 ? 1 : 0;
-} 
+} // title=s_str("@");
 function _ng(_3l, _4l) {
     _3l._Pq = _Q8(_3l, _3l, "@");
 }
@@ -33522,7 +33522,7 @@ function _W_() {
     global._vM = 0;
 }
 function _X_() {}
- function _Y_(_Z_) {
+/*@constructor */ function _Y_(_Z_) {
     this.___ = false;
     this._001 = 0;
     this._101 = 0;
@@ -33917,7 +33917,7 @@ function _M21() {
     this.width = null;
     this.height = null;
 }
- function _W21() {
+/*@constructor */ function _W21() {
     this._X21 = [];
     this._Y21 = null;
     this._801 = null;
@@ -35145,7 +35145,7 @@ function _u71() {
     _u51._U71.set(_T71, _u51._A51 * _u51._z51());
     _u51._A51 += _471._A51;
 }
- function _681(_781) {
+/*@constructor */ function _681(_781) {
     var _881 = null,
         _981 = null,
         _a81 = null,
@@ -35190,7 +35190,7 @@ function _u71() {
         debug("VERTEX BUILDER: Vertex format does not contain selected type.\n\n", true);
         return -1;
     }
-     this._v81 = function (_781) {
+    /*@this {yyVBufferBuilder} */ this._v81 = function (_781) {
         var _w81 = new ArrayBuffer(_781);
         var _x81 = new Int8Array(_881);
         var _y81 = new Int8Array(_w81);
@@ -35198,7 +35198,7 @@ function _u71() {
         _881 = _w81;
         _981 = new DataView(_881);
     };
-     this._z81 = function (_A81) {
+    /*@this {yyVBufferBuilder} */ this._z81 = function (_A81) {
         _e81 = 0;
         _f81 = 0;
         _g81 = 0;
@@ -35209,21 +35209,21 @@ function _u71() {
             this._v81(_c81._u81 * 36);
         }
     };
-     this._B81 = function () {};
+    /*@this {yyVBufferBuilder} */ this._B81 = function () {};
     this._C81 = function () {
         return _d81;
     };
     this._D81 = function () {
         return _131._I71(_d81);
     };
-     this._E81 = function (x, y) {
+    /*@this {yyVBufferBuilder} */ this._E81 = function (x, y) {
         var _s81 = _j81(_Z41._F81, _Z41._G81);
         if (_s81 >= 0) {
             _981.setFloat32(_s81, x, true);
             _981.setFloat32(_s81 + 4, y, true);
         }
     };
-     this._H81 = function (x, y, _L61) {
+    /*@this {yyVBufferBuilder} */ this._H81 = function (x, y, _L61) {
         var _s81 = _j81(_Z41._F81, _Z41._I81);
         if (_s81 >= 0) {
             _981.setFloat32(_s81, x, true);
@@ -35231,35 +35231,35 @@ function _u71() {
             _981.setFloat32(_s81 + 8, _L61, true);
         }
     };
-     this._J81 = function (_081, _f41) {
+    /*@this {yyVBufferBuilder} */ this._J81 = function (_081, _f41) {
         var _s81 = _j81(_Z41._K81, _Z41._L81);
         if (_s81 >= 0) {
             var _M81 = ((_f41 * 255.0) << 24) | _N71(_081);
             _981.setUint32(_s81, _M81, true);
         }
     };
-     this._N81 = function (_O81) {
+    /*@this {yyVBufferBuilder} */ this._N81 = function (_O81) {
         var _s81 = _j81(_Z41._K81, _Z41._L81);
         if (_s81 >= 0) {
             var _L31 = ((_O81 & 0xff) << 24) | ((_O81 & 0xff00) << 8) | ((_O81 & 0xff0000) >> 8) | ((_O81 & 0xff000000) >> 24);
             _981.setUint32(_s81, _L31, true);
         }
     };
-     this._P81 = function (_Q81) {
+    /*@this {yyVBufferBuilder} */ this._P81 = function (_Q81) {
         var _s81 = _j81(_Z41._K81, _Z41._L81);
         if (_s81 >= 0) {
             var _L31 = (_Q81 & 0xff000000) | ((_Q81 & 0xff) << 16) | (_Q81 & 0xff00) | ((_Q81 & 0xff0000) >> 16);
             _981.setUint32(_s81, _L31, true);
         }
     };
-     this._R81 = function (_P41, _J41) {
+    /*@this {yyVBufferBuilder} */ this._R81 = function (_P41, _J41) {
         var _s81 = _j81(_Z41._S81, _Z41._G81);
         if (_s81 >= 0) {
             _981.setFloat32(_s81, _P41, true);
             _981.setFloat32(_s81 + 4, _J41, true);
         }
     };
-     this._T81 = function (x, y, _L61) {
+    /*@this {yyVBufferBuilder} */ this._T81 = function (x, y, _L61) {
         var _s81 = _j81(_Z41._U81, _Z41._I81);
         if (_s81 >= 0) {
             _981.setFloat32(_s81, x, true);
@@ -35267,20 +35267,20 @@ function _u71() {
             _981.setFloat32(_s81 + 8, _L61, true);
         }
     };
-     this._V81 = function (x) {
+    /*@this {yyVBufferBuilder} */ this._V81 = function (x) {
         var _s81 = _j81(-1, _Z41._W81);
         if (_s81 >= 0) {
             _981.setFloat32(_s81, x, true);
         }
     };
-     this._X81 = function (x, y) {
+    /*@this {yyVBufferBuilder} */ this._X81 = function (x, y) {
         var _s81 = _j81(-1, _Z41._G81);
         if (_s81 >= 0) {
             _981.setFloat32(_s81, x, true);
             _981.setFloat32(_s81 + 4, y, true);
         }
     };
-     this._Y81 = function (x, y, _L61) {
+    /*@this {yyVBufferBuilder} */ this._Y81 = function (x, y, _L61) {
         var _s81 = _j81(-1, _Z41._I81);
         if (_s81 >= 0) {
             _981.setFloat32(_s81, x, true);
@@ -35288,7 +35288,7 @@ function _u71() {
             _981.setFloat32(_s81 + 8, _L61, true);
         }
     };
-     this._Z81 = function (x, y, _L61, _Z9) {
+    /*@this {yyVBufferBuilder} */ this._Z81 = function (x, y, _L61, _Z9) {
         var _s81 = _j81(-1, _Z41.__81);
         if (_s81 >= 0) {
             _981.setFloat32(_s81, x, true);
@@ -35297,7 +35297,7 @@ function _u71() {
             _981.setFloat32(_s81 + 12, _Z9, true);
         }
     };
-     this._091 = function (x, y, _L61, _Z9) {
+    /*@this {yyVBufferBuilder} */ this._091 = function (x, y, _L61, _Z9) {
         var _s81 = _j81(-1, _Z41._191);
         if (_s81 >= 0) {
             _981.setUint8(_s81, x, true);
@@ -35306,7 +35306,7 @@ function _u71() {
             _981.setUint8(_s81 + 3, _Z9, true);
         }
     };
-     this._291 = function () {
+    /*@this {yyVBufferBuilder} */ this._291 = function () {
         var _391 = new _G71(_f81, _c81, false);
         var _491 = _f81 * _c81._u81;
         var _591 = new Int8Array(_881, 0, _491);
@@ -35318,7 +35318,7 @@ function _u71() {
         _881 = null;
         _981 = null;
     };
-     this._691 = function (_791, _891) {
+    /*@this {yyVBufferBuilder} */ this._691 = function (_791, _891) {
         if (_b81) {
             if (_891 == -1) {
                 _131._991(_791, null, _a81, 0);
@@ -35350,7 +35350,7 @@ function _u71() {
 }
 var _f91 = null;
 var _g91 = [];
- function _h91() {
+/*@constructor */ function _h91() {
     var _i91 = 0,
         _j91 = 0.5;
     var _k91;
@@ -35377,7 +35377,7 @@ var _g91 = [];
             },
         },
     });
-     this._t91 = function (_u91) {
+    /*@this {yyGamePad} */ this._t91 = function (_u91) {
         _k91 = _u91.id;
         _m91 = _l91.slice();
         _n91 = _u91.axes.slice();
@@ -35393,16 +35393,16 @@ var _g91 = [];
             }
         }
     };
-     this._w91 = function () {
+    /*@this {yyGamePad} */ this._w91 = function () {
         return _k91 || "";
     };
-     this._x91 = function () {
+    /*@this {yyGamePad} */ this._x91 = function () {
         if (_l91) {
             return _l91.length;
         }
         return 0;
     };
-     this._y91 = function (_z91) {
+    /*@this {yyGamePad} */ this._y91 = function (_z91) {
         var _A91 = _l91[_z91];
         var _B91 = _m91[_z91];
         if (_A91 !== undefined && _B91 !== undefined) {
@@ -35410,7 +35410,7 @@ var _g91 = [];
         }
         return false;
     };
-     this._C91 = function (_z91) {
+    /*@this {yyGamePad} */ this._C91 = function (_z91) {
         var _A91 = _l91[_z91];
         var _B91 = _m91[_z91];
         if (_A91 !== undefined && _B91 !== undefined) {
@@ -35418,7 +35418,7 @@ var _g91 = [];
         }
         return false;
     };
-     this._D91 = function (_z91) {
+    /*@this {yyGamePad} */ this._D91 = function (_z91) {
         var _A91;
         if (typeof _l91[_z91] === "object") {
             _A91 = _l91[_z91].value;
@@ -35430,7 +35430,7 @@ var _g91 = [];
         }
         return false;
     };
-     this._E91 = function (_z91) {
+    /*@this {yyGamePad} */ this._E91 = function (_z91) {
         var _A91;
         if (typeof _l91[_z91] === "object") {
             _A91 = _l91[_z91].value;
@@ -35439,13 +35439,13 @@ var _g91 = [];
         }
         return _A91 || 0.0;
     };
-     this._F91 = function () {
+    /*@this {yyGamePad} */ this._F91 = function () {
         if (_n91) {
             return _n91.length;
         }
         return 0;
     };
-     this._G91 = function (_H91, _I91) {
+    /*@this {yyGamePad} */ this._G91 = function (_H91, _I91) {
         var _J91 = _n91[_H91] || 0;
         if (_o91 > 0.0) {
             var _K91 = Math.abs(_J91);
@@ -35459,7 +35459,7 @@ var _g91 = [];
         return _J91;
     };
 }
- function _L91() {
+/*@constructor */ function _L91() {
     var _M91 = 1.0,
         _N91 = 1.0;
     var _O91 = 0,
@@ -35611,27 +35611,27 @@ var _g91 = [];
         return 0;
     }
     function _L91() {}
-     this._La1 = function () {
+    /*@this {yyGamepadManager} */ this._La1 = function () {
         return _wa1.length;
     };
-     this._Ma1 = function (_Na1) {
+    /*@this {yyGamepadManager} */ this._Ma1 = function (_Na1) {
         var _Oa1 = _wa1[_Na1];
         if (_Oa1) {
             return _Oa1._w91();
         }
         return "";
     };
-     this._Pa1 = function () {
+    /*@this {yyGamepadManager} */ this._Pa1 = function () {
         return _va1 !== _O91;
     };
-     this._s91 = function (_Na1) {
+    /*@this {yyGamepadManager} */ this._s91 = function (_Na1) {
         var _Oa1 = _wa1[_Na1];
         if (_Oa1) {
             return _Oa1._s91;
         }
         return 0.0;
     };
-     this._Qa1 = function (_Na1, _Ra1) {
+    /*@this {yyGamepadManager} */ this._Qa1 = function (_Na1, _Ra1) {
         var _Oa1 = _wa1[_Na1];
         if (_Oa1) {
             if (_Ra1 >= 0.0 && _Ra1 <= _M91) {
@@ -35639,7 +35639,7 @@ var _g91 = [];
             }
         }
     };
-     this._q91 = function (_Na1) {
+    /*@this {yyGamepadManager} */ this._q91 = function (_Na1) {
         var _Oa1 = _wa1[_Na1];
         if (_Oa1) {
             return _Oa1._q91;
@@ -35648,7 +35648,7 @@ var _g91 = [];
         }
         return 0.0;
     };
-     this._Sa1 = function (_Na1, _Ta1) {
+    /*@this {yyGamepadManager} */ this._Sa1 = function (_Na1, _Ta1) {
         _g91[_Na1] = _Ta1;
         var _Oa1 = _wa1[_Na1];
         if (_Oa1) {
@@ -35657,10 +35657,10 @@ var _g91 = [];
             }
         }
     };
-     this._Ua1 = function () {
+    /*@this {yyGamepadManager} */ this._Ua1 = function () {
         _wa1 = [];
     };
-     this._Va1 = function () {
+    /*@this {yyGamepadManager} */ this._Va1 = function () {
         switch (_va1) {
             case _P91:
                 _ya1();
@@ -35670,55 +35670,55 @@ var _g91 = [];
                 return;
         }
     };
-     this._Wa1 = function (_Na1) {
+    /*@this {yyGamepadManager} */ this._Wa1 = function (_Na1) {
         if (_wa1[_Na1] !== null && _wa1[_Na1] !== undefined) {
             return true;
         }
         return false;
     };
-     this._x91 = function (_Na1) {
+    /*@this {yyGamepadManager} */ this._x91 = function (_Na1) {
         var _Oa1 = _wa1[_Na1];
         if (_Oa1) {
             return _Oa1._x91();
         }
         return 0;
     };
-     this._F91 = function (_Na1) {
+    /*@this {yyGamepadManager} */ this._F91 = function (_Na1) {
         var _Oa1 = _wa1[_Na1];
         if (_Oa1) {
             return _Oa1._F91();
         }
         return 0;
     };
-     this._D91 = function (_Na1, _z91) {
+    /*@this {yyGamepadManager} */ this._D91 = function (_Na1, _z91) {
         var _Oa1 = _wa1[_Na1];
         if (_Oa1) {
             return _Oa1._D91(_Ja1(_z91), _Oa1._s91);
         }
         return false;
     };
-     this._y91 = function (_Na1, _z91) {
+    /*@this {yyGamepadManager} */ this._y91 = function (_Na1, _z91) {
         var _Oa1 = _wa1[_Na1];
         if (_Oa1) {
             return _Oa1._y91(_Ja1(_z91), _Oa1._s91);
         }
         return false;
     };
-     this._C91 = function (_Na1, _z91) {
+    /*@this {yyGamepadManager} */ this._C91 = function (_Na1, _z91) {
         var _Oa1 = _wa1[_Na1];
         if (_Oa1) {
             return _Oa1._C91(_Ja1(_z91), _Oa1._s91);
         }
         return false;
     };
-     this._E91 = function (_Na1, _z91) {
+    /*@this {yyGamepadManager} */ this._E91 = function (_Na1, _z91) {
         var _Oa1 = _wa1[_Na1];
         if (_Oa1) {
             return _Oa1._E91(_Ja1(_z91));
         }
         return 0;
     };
-     this._G91 = function (_Na1, _H91) {
+    /*@this {yyGamepadManager} */ this._G91 = function (_Na1, _H91) {
         var _Oa1 = _wa1[_Na1];
         if (_Oa1) {
             return _Oa1._G91(_Ka1(_H91), _N91);
@@ -35730,7 +35730,7 @@ var _Xa1 = [];
 var _Ya1 = "None";
 var _Za1 = 0;
 var __a1 = 0;
- function _0b1() {
+/*@constructor */ function _0b1() {
     this.x = 0;
     this.y = 0;
     this._D91 = 0;
@@ -35767,7 +35767,7 @@ _0b1.prototype._2b1 = function (_a11, _b11) {
     this.x = _a11;
     this.y = _b11;
 };
- function _gb1(_hb1) {
+/*@constructor */ function _gb1(_hb1) {
     for (var _X9 = 0; _X9 < _Xa1.length; _X9++) {
         if (_Xa1[_X9] === _hb1) {
             return _X9;
@@ -35868,7 +35868,7 @@ function _Db1() {
     canvas.ontouchcancel = _mb1;
 }
 var _Eb1, _Fb1, _Gb1, _Hb1, _Ib1, _Jb1, _Kb1;
-  function _Lb1(_Mb1, _Nb1) {
+/*@constructor */ /*@constructor */ function _Lb1(_Mb1, _Nb1) {
     this._Ob1 = [];
     this._X71 = _Mb1;
     this._Y71 = _Nb1;
@@ -36300,7 +36300,7 @@ function _Gc1(_Hc1) {
     }
     return _Hc1;
 }
- function _Kc1(_l81, _Lc1) {
+/*@constructor */ function _Kc1(_l81, _Lc1) {
     this._Mc1 = _l81;
     this.Object = _Lc1;
 }
@@ -36523,7 +36523,7 @@ function __c1() {
     var _bd1 = _cd1(_Zc1.split("").reverse().join(""));
     return _cd1(_bd1);
 }
-  function _dd1(_ed1, _Lc1) {
+/*@constructor */ /*@constructor */ function _dd1(_ed1, _Lc1) {
     this._Xf = _ed1;
     this._fd1 = _Lc1;
 }
@@ -39050,7 +39050,7 @@ function _qp1(__o1) {
     _ip1();
     _Ca1._Da1(__o1.id, null, _jp1, _3p1);
 }
- function _rp1() {
+/*@constructor */ function _rp1() {
     if (_sp1.length > 0) {
         switch (_sp1[0].type) {
             case _yo1:
@@ -39130,7 +39130,7 @@ function _Lo1(_wp1) {
 }
 var _zp1 = 3;
 var _Ap1 = -1;
- function _Bp1() {
+/*@constructor */ function _Bp1() {
     this._Cp1 = "";
     this._Dp1 = 0;
     this._Ep1 = false;
@@ -39549,7 +39549,7 @@ var _Eq1 = 0,
     _Mq1 = 8,
     _Nq1 = 9;
 var _Oq1 = 1;
- function _Pq1() {
+/*@constructor */ function _Pq1() {
     var _Qq1 = _7d1("hiscores_data_", true);
     if (_Qq1 != null) {
         try {
@@ -39944,7 +39944,7 @@ function _zE(_cs1, _ds1) {
     if (yyGetInt32(_ds1) == 0) _I01._es1(_cs1);
     else _I01._es1(1000000.0 / _cs1);
 }
- function _fs1() {
+/*@constructor */ function _fs1() {
     this._gs1 = 0;
     this._hs1 = 0;
     this._is1 = false;
@@ -41275,7 +41275,7 @@ var _Xw1 = 0x7;
 var _Yw1 = 0;
 var _Zw1 = 0x7ffff << _Yw1;
 var __w1 = 0x7ffff;
- function _0x1() {
+/*@constructor */ function _0x1() {
     this._4a = true;
     this._1x1 = false;
     this.index = 0;
@@ -41291,7 +41291,7 @@ var __w1 = 0x7ffff;
     this._SG = 0;
     this._oC = 0;
 }
- function _9x1() {
+/*@constructor */ function _9x1() {
     this._k91 = 0;
     this._Xf = 0;
     this._ax1 = 0;
@@ -41306,22 +41306,22 @@ var __w1 = 0x7ffff;
     this._jx1 = -1;
     this._kx1 = null;
     this._lx1 = new _jc1();
-}  
- function _mx1() {
+} /*@constructor */ /*@constructor */
+/*@constructor */ function _mx1() {
     this._nx1 = -1;
     this._ox1 = null;
     this._px1 = _Hw1;
     this._qx1 = false;
     this._rx1 = "";
 }
- function _sx1() {
+/*@constructor */ function _sx1() {
     this._tx1 = null;
     this._px1 = _Gw1;
     this._qx1 = false;
     this._rx1 = "";
     this._k91 = 0;
 }
- function _ux1() {
+/*@constructor */ function _ux1() {
     this._px1 = _Kw1;
     this._vx1 = -1;
     this._wx1 = 0;
@@ -41334,8 +41334,8 @@ var __w1 = 0x7ffff;
     this._rx1 = "";
     this._k91 = 0;
     this._Cx1 = ~_Rw1;
-} 
- function _Dx1() {
+} /*@constructor */
+/*@constructor */ function _Dx1() {
     this._Ex1 = -1;
     this._Fx1 = _8x1;
     this._Gx1 = 0;
@@ -41353,14 +41353,14 @@ var __w1 = 0x7ffff;
     this._k91 = 0;
     this._qx1 = false;
 }
- function _Ox1() {
+/*@constructor */ function _Ox1() {
     this._px1 = _Lw1;
     this._Px1 = -1;
     this._rx1 = "";
     this._k91 = 0;
     this._qx1 = false;
 }
- function _Qx1() {
+/*@constructor */ function _Qx1() {
     this._ex1 = true;
     this._Dp1 = -1;
     this._wx1 = 0;
@@ -41380,7 +41380,7 @@ var __w1 = 0x7ffff;
     this._qx1 = false;
 }
 var _Vx1 = 32;
- function _Wx1() {
+/*@constructor */ function _Wx1() {
     this._Xx1 = 0;
     this._Yx1 = 0;
     this._Zx1 = 0;
@@ -42228,7 +42228,7 @@ function _9X(_ds1, _GA1) {
         _Oy1._xx1 = yyGetReal(_GA1);
     }
 }
- function _Hz1() {
+/*@constructor */ function _Hz1() {
     this._p81 = -1;
     this._ty1 = -1;
 }
@@ -43003,7 +43003,7 @@ function _SB1(_QA1, _xd1, _TB1, _HB1, _IB1) {
     _xd1._E81(_UB1, _VB1);
     return true;
 }
- function __B1(_0C1, _1C1, _2C1, _3C1, _4C1, _5C1) {
+/*@constructor */ function __B1(_0C1, _1C1, _2C1, _3C1, _4C1, _5C1) {
     this._6C1 = _0C1;
     this._7C1 = _1C1;
     this._8C1 = ~~_2C1;
@@ -43655,7 +43655,7 @@ function _mH1() {
     _wH1();
     _xH1();
 }
- function _yH1(_zH1, _AH1, _E11) {
+/*@constructor */ function _yH1(_zH1, _AH1, _E11) {
     this._dH1 = _zH1;
     this._7H1 = _AH1;
     this._4H1 = g_WebAudioContext.currentTime;
@@ -43669,7 +43669,7 @@ function _mH1() {
         this._6H1 = this._fH1.gain;
     }
 }
- function _CH1() {
+/*@constructor */ function _CH1() {
     this.buffer = null;
     this.gain = 1.0;
     this._DH1 = 1.0;
@@ -43710,7 +43710,7 @@ _CH1.prototype._KH1 = function (_LH1, _MH1) {
     );
     return true;
 };
- function _aH1(_zH1, _NH1, _OH1) {
+/*@constructor */ function _aH1(_zH1, _NH1, _OH1) {
     this._eH1 = g_WebAudioContext.createGain();
     this._PH1 = null;
     this._dG1 = 0;
@@ -44655,7 +44655,7 @@ function _uH1(_vJ1, _wJ1, _xJ1, _zJ1, _AJ1, _BJ1) {
         }
     }
 }
- function _CJ1(e) {
+/*@this {XMLHttpRequest} */ function _CJ1(e) {
     if (_pb1 != _qb1) return;
     var targetid = e.target.targetid;
     debug("error loading sound" + targetid);
@@ -44667,7 +44667,7 @@ function _uH1(_vJ1, _wJ1, _xJ1, _zJ1, _AJ1, _BJ1) {
         ClearEventListeners(this);
     }
 }
- function _EJ1(e) {
+/*@this {XMLHttpRequest} */ function _EJ1(e) {
     if (_pb1 != _qb1) return;
     var targetid = e.target.targetid;
     if (_FJ1) debug("sound loaded: " + targetid);
@@ -44789,7 +44789,7 @@ var _ZJ1 = "Loaded";
 var __J1 = "Unloading";
 var _0K1 = 0;
 var _1K1 = [];
- function _2K1(_uJ1) {
+/*@constructor */ function _2K1(_uJ1) {
     this._j2 = _uJ1;
     this._3K1 = _XJ1;
     this._4K1 = 0;
@@ -44812,7 +44812,7 @@ _2K1.prototype._9K1 = function (_aK1) {
         }
     }
 };
- function _VJ1(e) {
+/*@this {XMLHttpRequest} */ function _VJ1(e) {
     var targetid = this.targetid._lJ1;
     var _cK1 = this.targetid._UJ1;
     if (_FJ1) debug("sound loaded " + targetid);
@@ -44841,7 +44841,7 @@ _2K1.prototype._9K1 = function (_aK1) {
         }
     }
 }
- function _WJ1(e) {
+/*@this {XMLHttpRequest} */ function _WJ1(e) {
     var targetid = this.targetid._lJ1;
     var _cK1 = this.targetid._UJ1;
     debug("error loading sound" + targetid);
@@ -46123,7 +46123,7 @@ var _qO1 = aa_1241_kz();
 function aa_1241_kz() {
     return 0x87155211;
 }
- function _rO1() {
+/*@constructor */ function _rO1() {
     var _sO1 = null;
     if (window.XMLHttpRequest) {
         _sO1 = new XMLHttpRequest();
@@ -46739,7 +46739,7 @@ function _Hx() {
     var _wR1 = Number.MAX_VALUE;
     var _xR1 = 2.2204460492503131e-16;
     var _yR1 = Math.PI;
-    
+    /// @file
     var _zR1 = 2;
     var _AR1 = 8;
     var _BR1 = 0.1;
@@ -47175,7 +47175,7 @@ function _Hx() {
             _7T1._8T1 = this._8T1;
             _7T1._9T1 = this._9T1;
             return _7T1;
-        }, 
+        }, /// @param beta is a factor in [0,1], where 0 indicates alpha0.
         _aT1: function (_3T1, _bT1) {
             _3T1._ot1.x = (1.0 - _bT1) * this._6T1.x + _bT1 * this._Y9.x;
             _3T1._ot1.y = (1.0 - _bT1) * this._6T1.y + _bT1 * this._Y9.y;
@@ -47183,7 +47183,7 @@ function _Hx() {
             _3T1._Yr1._sc1(angle);
             _3T1._ot1.x -= _3T1._Yr1._Y9 * this._5T1.x - _3T1._Yr1._Wo1 * this._5T1.y;
             _3T1._ot1.y -= _3T1._Yr1._Wo1 * this._5T1.x + _3T1._Yr1._Y9 * this._5T1.y;
-        }, 
+        }, /// @param alpha the new initial time.
         _cT1: function (alpha) {
             _uR1(this._9T1 < 1.0);
             var _bT1 = (alpha - this._9T1) / (1.0 - this._9T1);
@@ -47363,7 +47363,7 @@ function _Hx() {
         __T1: function (vertices, vertexCount, color) {},
         _0U1: function (_1U1, _2U1, color) {},
         _3U1: function (_1U1, _2U1, _Ge1, color) {},
-        _4U1: function (_Fe1, _5U1, color) {}, 
+        _4U1: function (_Fe1, _5U1, color) {}, /// @param xf a transform.
         _6U1: function (_3T1) {},
         _7U1: function (_8U1, _2U1, _9U1, _d31) {},
         _UT1: 0,
@@ -47402,30 +47402,34 @@ function _Hx() {
         this._1U1 = new _iS1();
         this._qU1 = 0;
     }
-     function _rU1() {
+    /*
+     * A shape.
+     * @constructor
+     * @returns {b2Shape}
+     */ function _rU1() {
         this._px1 = 0;
         this._sU1 = 0;
     }
     _rU1.prototype = {
-        _b01: function () {}, 
+        _b01: function () {}, /// @return the shape type.
         _tU1: function () {
             return this._px1;
         },
-        _uU1: function () {}, 
-        
-        _vU1: function (_3T1, _ot1) {}, 
-        
-        
-        
-        _wU1: function (_Kr1, _Ir1, transform, _xU1) {}, 
-        
-        
-        _yU1: function (_zU1, _3T1, _xU1) {}, 
-        
-        _AU1: function (_BU1, _CU1) {}, 
-        
-        
-        
+        _uU1: function () {}, /// @param xf the shape world transform.
+        /// @param p a point in world coordinates.
+        _vU1: function (_3T1, _ot1) {}, /// @param output the ray-cast results.
+        /// @param input the ray-cast input parameters.
+        /// @param transform the transform to be applied to the shape.
+        /// @param childIndex the child shape index
+        _wU1: function (_Kr1, _Ir1, transform, _xU1) {}, /// @param aabb returns the axis aligned box.
+        /// @param xf the world transform of the shape.
+        /// @param childIndex the child shape
+        _yU1: function (_zU1, _3T1, _xU1) {}, /// @param massData returns the mass data for this shape.
+        /// @param density the density in kilograms per meter squared.
+        _AU1: function (_BU1, _CU1) {}, /// @param xf the shape world transform.
+        /// @param p a point in world coordinates.
+        /// @param distance returns the distance from the current shape.
+        /// @param normal returns the direction in which the distance increases.
         _DU1: function (_3T1, _ot1, _EU1, _FU1, _xU1) {},
         _vS1: function (out) {
             var _cq1 = out || {};
@@ -47455,7 +47459,7 @@ function _Hx() {
             _NU1._sU1 = this._sU1;
             _NU1._MU1 = this._MU1._b01();
             return _NU1;
-        }, 
+        }, /// @see b2Shape::GetChildCount
         _uU1: function () {
             return 1;
         },
@@ -47484,7 +47488,7 @@ function _Hx() {
                 return !0;
             }
             return !1;
-        }, 
+        }, /// @see b2Shape::ComputeAABB
         _yU1: function (_zU1, transform, _xU1) {
             var _qe1 = transform._ot1.x + (transform._Yr1._Y9 * this._MU1.x - transform._Yr1._Wo1 * this._MU1.y);
             var _re1 = transform._ot1.y + (transform._Yr1._Wo1 * this._MU1.x + transform._Yr1._Y9 * this._MU1.y);
@@ -47492,7 +47496,7 @@ function _Hx() {
             _zU1._RU1.y = _re1 - this._sU1;
             _zU1._SU1.x = _qe1 + this._sU1;
             _zU1._SU1.y = _re1 + this._sU1;
-        }, 
+        }, /// @see b2Shape::ComputeMass
         _AU1: function (_BU1, _CU1) {
             _BU1._pU1 = _CU1 * _yR1 * this._sU1 * this._sU1;
             _BU1._1U1 = this._MU1;
@@ -47558,10 +47562,10 @@ function _Hx() {
             _NU1._1V1 = this._1V1;
             _NU1._2V1 = this._2V1;
             return _NU1;
-        }, 
+        }, /// @see b2Shape::GetChildCount
         _uU1: function () {
             return 1;
-        }, 
+        }, /// @see b2Shape::TestPoint
         _vU1: function (transform, _ot1) {
             return !1;
         },
@@ -47600,7 +47604,7 @@ function _Hx() {
                 _Kr1._FU1 = _tT1(_3T1._Yr1, _FU1);
             }
             return !0;
-        }, 
+        }, /// @see b2Shape::ComputeAABB
         _yU1: function (_zU1, _3T1, _xU1) {
             var _p61 = _3T1._Yr1._Y9 * this._ZU1.x - _3T1._Yr1._Wo1 * this._ZU1.y + _3T1._ot1.x;
             var _q61 = _3T1._Yr1._Wo1 * this._ZU1.x + _3T1._Yr1._Y9 * this._ZU1.y + _3T1._ot1.y;
@@ -47614,7 +47618,7 @@ function _Hx() {
             _zU1._RU1.y = _6V1 - this._sU1;
             _zU1._SU1.x = _7V1 + this._sU1;
             _zU1._SU1.y = _8V1 + this._sU1;
-        }, 
+        }, /// @see b2Shape::ComputeMass
         _AU1: function (_BU1, _CU1) {
             _BU1._pU1 = 0.0;
             _BU1._1U1 = _iS1.Multiply(0.5, _iS1._Da1(this._ZU1, this.__U1));
@@ -47674,8 +47678,8 @@ function _Hx() {
     }
     _aV1._hV1 = new _XU1();
     _aV1.prototype = {
-        
-        
+        /// @param vertices an array of vertices, these are copied
+        /// @param count the vertex count
         _iV1: function (vertices, _d31) {
             _uR1(this._bV1 == null && this._cV1 == 0);
             _uR1(_d31 >= 3);
@@ -47692,8 +47696,8 @@ function _Hx() {
             this._eV1._IE1(this._bV1[1]);
             this._fV1 = !0;
             this._gV1 = !0;
-        }, 
-        
+        }, /// @param vertices an array of vertices, these are copied
+        /// @param count the vertex count
         _jV1: function (vertices, _d31) {
             _uR1(this._bV1 == null && this._cV1 == 0);
             _uR1(_d31 >= 2);
@@ -47728,7 +47732,7 @@ function _Hx() {
             _NU1._fV1 = this._fV1;
             _NU1._gV1 = this._gV1;
             return _NU1;
-        }, 
+        }, /// @see b2Shape::GetChildCount
         _uU1: function () {
             return this._cV1 - 1;
         },
@@ -47752,7 +47756,7 @@ function _Hx() {
                 _pV1._0V1 = this._eV1;
                 _pV1._2V1 = this._gV1;
             }
-        }, 
+        }, /// @see b2Shape::TestPoint
         _vU1: function (transform, _ot1) {
             return !1;
         },
@@ -47766,7 +47770,7 @@ function _Hx() {
             _aV1._hV1._ZU1 = this._bV1[_qV1]._b01();
             _aV1._hV1.__U1 = this._bV1[_rV1]._b01();
             return _aV1._hV1._wU1(_Kr1, _Ir1, _3T1, 0);
-        }, 
+        }, /// @see b2Shape::ComputeAABB
         _yU1: function (_zU1, _3T1, _xU1) {
             _uR1(_xU1 < this._cV1);
             var _qV1 = _xU1;
@@ -47782,7 +47786,7 @@ function _Hx() {
             _zU1._RU1.y = _GT1(_q61, _s61);
             _zU1._SU1.x = _IT1(_p61, _r61);
             _zU1._SU1.y = _IT1(_q61, _s61);
-        }, 
+        }, /// @see b2Shape::ComputeMass
         _AU1: function (_BU1, _CU1) {
             _BU1._pU1 = 0.0;
             _BU1._1U1._jS1();
@@ -47839,11 +47843,11 @@ function _Hx() {
                 _NU1._uV1[_X9] = this._uV1[_X9]._b01();
             }
             return _NU1;
-        }, 
+        }, /// @see b2Shape::GetChildCount
         _uU1: function () {
             return 1;
-        }, 
-        
+        }, /// @warning the points may be re-ordered, even if they form a convex polygon
+        /// @warning collinear points are handled but not removed. Collinear points
         _sc1: function (vertices, _d31) {
             _uR1(3 <= _d31 && _d31 <= _AR1);
             if (_d31 < 3) {
@@ -47921,8 +47925,8 @@ function _Hx() {
                 this._uV1[_X9]._rS1();
             }
             this._tV1 = _sV1._CV1(this._bV1, _Z11);
-        }, 
-        
+        }, /// @param hx the half-width.
+        /// @param hy the half-height.
         _vV1: function (_DV1, _EV1, _1U1, angle) {
             this._cV1 = 4;
             this._bV1[0] = new _iS1(-_DV1, -_EV1);
@@ -47942,7 +47946,7 @@ function _Hx() {
                 this._bV1[_X9]._IE1(_vT1(_3T1, this._bV1[_X9]));
                 this._uV1[_X9]._IE1(_tT1(_3T1._Yr1, this._uV1[_X9]));
             }
-        }, 
+        }, /// @see b2Shape::TestPoint
         _vU1: function (_3T1, _ot1) {
             var _FV1 = _uT1(_3T1._Yr1, _iS1._pS1(_ot1, _3T1._ot1));
             for (var _X9 = 0; _X9 < this._cV1; ++_X9) {
@@ -47986,7 +47990,7 @@ function _Hx() {
                 return !0;
             }
             return !1;
-        }, 
+        }, /// @see b2Shape::ComputeAABB
         _yU1: function (_zU1, _3T1, _xU1) {
             var _5V1 = _3T1._Yr1._Y9 * this._bV1[0].x - _3T1._Yr1._Wo1 * this._bV1[0].y + _3T1._ot1.x;
             var _6V1 = _3T1._Yr1._Wo1 * this._bV1[0].x + _3T1._Yr1._Y9 * this._bV1[0].y + _3T1._ot1.y;
@@ -48004,7 +48008,7 @@ function _Hx() {
             _zU1._RU1.y = _6V1 - this._sU1;
             _zU1._SU1.x = _7V1 + this._sU1;
             _zU1._SU1.y = _8V1 + this._sU1;
-        }, 
+        }, /// @see b2Shape::ComputeMass
         _AU1: function (_BU1, _CU1) {
             _uR1(this._cV1 >= 3);
             var _1U1 = new _iS1(0.0, 0.0);
@@ -48044,7 +48048,7 @@ function _Hx() {
         _VU1: function (index) {
             _uR1(0 <= index && index < this._cV1);
             return this._bV1[index];
-        }, 
+        }, /// @returns true if valid
         _WV1: function () {
             for (var _X9 = 0; _X9 < this._cV1; ++_X9) {
                 var _qV1 = _X9;
@@ -48228,8 +48232,8 @@ function _Hx() {
         },
         _EW1: function (_BW1, _zU1) {
             this._cW1._EW1(_BW1, _zU1);
-        }, 
-        
+        }, /// @param input the ray-cast input data. The ray extends from p1 to p1 + maxFraction * (p2 - p1).
+        /// @param callback a callback class that is called for each proxy that is hit by the ray.
         _wU1: function (_BW1, _Ir1) {
             this._cW1._wU1(_BW1, _Ir1);
         },
@@ -48241,7 +48245,7 @@ function _Hx() {
         },
         _OW1: function () {
             return this._cW1._PW1();
-        }, 
+        }, /// @param newOrigin the new origin with respect to the old origin
         _QW1: function (_RW1) {
             this._cW1._QW1(_RW1);
         },
@@ -49896,7 +49900,7 @@ function _Hx() {
             _uR1(this._Q02[_mW1]._M02());
             this._X02(_mW1);
             this._Y02(_mW1);
-        }, 
+        }, /// @return true if the proxy was re-inserted.
         _qW1: function (_mW1, _zU1, _rW1) {
             _uR1(0 <= _mW1 && _mW1 < this._O02);
             _uR1(this._Q02[_mW1]._M02());
@@ -49920,7 +49924,7 @@ function _Hx() {
             }
             this._W02(_mW1);
             return !0;
-        }, 
+        }, /// @return the proxy user data or 0 if the id is invalid.
         _uW1: function (_mW1) {
             _uR1(0 <= _mW1 && _mW1 < this._O02);
             return this._Q02[_mW1]._lW1;
@@ -49950,8 +49954,8 @@ function _Hx() {
                     }
                 }
             }
-        }, 
-        
+        }, /// @param input the ray-cast input data. The ray extends from p1 to p1 + maxFraction * (p2 - p1).
+        /// @param callback a callback class that is called for each proxy that is hit by the ray.
         _wU1: function (_BW1, _Ir1) {
             var _Fe1 = _Ir1._Fe1;
             var _5U1 = _Ir1._5U1;
@@ -50107,7 +50111,7 @@ function _Hx() {
             }
             this._N02 = _e12[0];
             this._WV1();
-        }, 
+        }, /// @param newOrigin the new origin with respect to the old origin
         _QW1: function (_RW1) {
             for (var _X9 = 0; _X9 < this._O02; ++_X9) {
                 this._Q02[_X9]._zU1._RU1._pS1(_RW1);
@@ -50764,7 +50768,7 @@ function _Hx() {
         this._I22 = 0.0;
         this._J22 = !0;
         this._K22 = !0;
-        this._L22 = !1; 
+        this._L22 = !1; /// @warning You should use this flag sparingly since it increases processing time.
         this._M22 = !1;
         this._cl = !0;
         this._lW1 = null;
@@ -50864,8 +50868,8 @@ function _Hx() {
     _D22._m32 = new _iS1();
     _D22._n32 = new _2T1();
     _D22.prototype = {
-        
-        
+        /// @param def the fixture definition.
+        /// @warning This function is locked during callbacks.
         _o32: function (_p32, _CU1) {
             if (typeof _CU1 !== "undefined") {
                 var _q32 = new _r32();
@@ -50892,8 +50896,8 @@ function _Hx() {
             }
             this._X22._R22 |= _C32._D32;
             return _2F1;
-        }, 
-        
+        }, /// @param fixture the fixture to be removed.
+        /// @warning This function is locked during callbacks.
         _E32: function (_2F1) {
             _uR1(this._X22._s32() == !1);
             if (this._X22._s32() == !0) {
@@ -50931,8 +50935,8 @@ function _Hx() {
             _2F1._232 = null;
             --this._i32;
             this._B32();
-        }, 
-        
+        }, /// @param position the world position of the body's local origin.
+        /// @param angle the world rotation in radians.
         _M32: function (position, angle) {
             _uR1(this._X22._s32() == !1);
             if (this._X22._s32() == !0) {
@@ -50949,13 +50953,13 @@ function _Hx() {
             for (var _xp1 = this._h32; _xp1; _xp1 = _xp1._232) {
                 _xp1._N32(_v32, this._T_1, this._T_1);
             }
-        }, 
+        }, /// @return the world transform of the body's origin.
         _aT1: function () {
             return this._T_1;
-        }, 
+        }, /// @return the world position of the body's origin.
         _RE1: function () {
             return this._T_1._ot1;
-        }, 
+        }, /// @return the current world rotation angle in radians.
         __S1: function () {
             return this._Z22._l41;
         },
@@ -50964,7 +50968,7 @@ function _Hx() {
         },
         _P32: function () {
             return this._Z22._5T1;
-        }, 
+        }, /// @param v the new linear velocity of the center of mass.
         _Q32: function (_J41) {
             if (this._px1 == _D22._E22) {
                 return;
@@ -50973,10 +50977,10 @@ function _Hx() {
                 this._qF1(!0);
             }
             this._332 = _J41;
-        }, 
+        }, /// @return the linear velocity of the center of mass.
         _R32: function () {
             return this._332;
-        }, 
+        }, /// @param omega the new angular velocity in radians/second.
         _S32: function (_Z9) {
             if (this._px1 == _D22._E22) {
                 return;
@@ -50985,12 +50989,12 @@ function _Hx() {
                 this._qF1(!0);
             }
             this._432 = _Z9;
-        }, 
+        }, /// @return the angular velocity in radians/second.
         _T32: function () {
             return this._432;
-        }, 
-        
-        
+        }, /// @param force the world force vector, usually in Newtons (N).
+        /// @param point the world position of the point of application.
+        /// @param wake also wake up the body
         _U32: function (_V32, _rY1, _W32) {
             if (this._px1 != _D22._b32) {
                 return;
@@ -51002,8 +51006,8 @@ function _Hx() {
                 this._832._Da1(_V32);
                 this._932 += _fT1(_iS1._pS1(_rY1, this._Z22._Y9), _V32);
             }
-        }, 
-        
+        }, /// @param force the world force vector, usually in Newtons (N).
+        /// @param wake also wake up the body
         _X32: function (_V32, _W32) {
             if (this._px1 != _D22._b32) {
                 return;
@@ -51014,8 +51018,8 @@ function _Hx() {
             if (this._R22 & _D22._V22) {
                 this._832._Da1(_V32);
             }
-        }, 
-        
+        }, /// @param torque about the z-axis (out of the screen), usually in N-m.
+        /// @param wake also wake up the body
         _Y32: function (_Z32, _W32) {
             if (this._px1 != _D22._b32) {
                 return;
@@ -51026,9 +51030,9 @@ function _Hx() {
             if (this._R22 & _D22._V22) {
                 this._932 += _Z32;
             }
-        }, 
-        
-        
+        }, /// @param impulse the world impulse vector, usually in N-seconds or kg-m/s.
+        /// @param point the world position of the point of application.
+        /// @param wake also wake up the body
         __32: function (_042, _rY1, _W32) {
             if (this._px1 != _D22._b32) {
                 return;
@@ -51040,8 +51044,8 @@ function _Hx() {
                 this._332._Da1(_iS1.Multiply(this._d32, _042));
                 this._432 += this._f32 * _fT1(_iS1._pS1(_rY1, this._Z22._Y9), _042);
             }
-        }, 
-        
+        }, /// @param impulse the angular impulse in units of kg*m*m/s
+        /// @param wake also wake up the body
         _142: function (_042, _W32) {
             if (this._px1 != _D22._b32) {
                 return;
@@ -51052,18 +51056,18 @@ function _Hx() {
             if (this._R22 & _D22._V22) {
                 this._432 += this._f32 * _042;
             }
-        }, 
+        }, /// @return the mass, usually in kilograms (kg).
         _242: function () {
             return this._c32;
-        }, 
+        }, /// @return the rotational inertia, usually in kg-m^2.
         _342: function () {
             return this._e32 + this._c32 * _eT1(this._Z22._5T1, this._Z22._5T1);
-        }, 
+        }, /// @return a struct containing the mass, inertia and center of the body.
         _442: function (data) {
             data._pU1 = this._c32;
             data._qU1 = this._e32 + this._c32 * _eT1(this._Z22._5T1, this._Z22._5T1);
             data._1U1 = this._Z22._5T1;
-        }, 
+        }, /// @param massData the mass properties.
         _542: function (_BU1) {
             _uR1(this._X22._s32() == !1);
             if (this._X22._s32() == !0) {
@@ -51135,28 +51139,28 @@ function _Hx() {
             this._Z22._6T1._IE1(_vT1(this._T_1, this._Z22._5T1));
             this._Z22._Y9._IE1(this._Z22._6T1);
             this._332._Da1(_hT1(this._432, _iS1._pS1(this._Z22._Y9, _D22._m32)));
-        }, 
-        
+        }, /// @param localPoint a point on the body measured relative the the body's origin.
+        /// @return the same point expressed in world coordinates.
         _642: function (_oY1) {
             return _vT1(this._T_1, _oY1);
-        }, 
-        
+        }, /// @param localVector a vector fixed in the body.
+        /// @return the same vector expressed in world coordinates.
         _742: function (_842) {
             return _tT1(this._T_1._Yr1, _842);
-        }, 
-        
+        }, /// @param a point in world coordinates.
+        /// @return the corresponding local point relative to the body's origin.
         _942: function (_a42) {
             return _xT1(this._T_1, _a42);
-        }, 
-        
+        }, /// @param a vector in world coordinates.
+        /// @return the corresponding local vector.
         _b42: function (_c42) {
             return _uT1(this._T_1._Yr1, _c42);
-        }, 
-        
+        }, /// @param a point in world coordinates.
+        /// @return the world velocity of a point.
         _d42: function (_a42) {
             return _iS1._Da1(this._332, _hT1(this._432, _iS1._pS1(_a42, this._Z22._Y9)));
-        }, 
-        
+        }, /// @param a point in local coordinates.
+        /// @return the world velocity of a point.
         _e42: function (_oY1) {
             return this._d42(this._642(_oY1));
         },
@@ -51236,7 +51240,7 @@ function _Hx() {
         },
         _t42: function () {
             return (this._R22 & _D22._U22) == _D22._U22;
-        }, 
+        }, /// @param flag set to true to wake the body, false to put it to sleep.
         _qF1: function (_q42) {
             if (_q42) {
                 if ((this._R22 & _D22._V22) == 0) {
@@ -51251,7 +51255,7 @@ function _Hx() {
                 this._832._jS1();
                 this._932 = 0.0;
             }
-        }, 
+        }, /// @return true if the body is awake.
         _u42: function () {
             return (this._R22 & _D22._V22) == _D22._V22;
         },
@@ -51305,7 +51309,7 @@ function _Hx() {
         },
         _A42: function () {
             return this.__22;
-        }, 
+        }, /// @warning this list changes during the time step and you may
         _B42: function () {
             return this._032;
         },
@@ -51427,7 +51431,7 @@ function _Hx() {
         this._2F1 = null;
         this._xU1 = 0;
         this._mW1 = 0;
-    } 
+    } /// @warning you cannot reuse fixtures.
     function _t32() {
         this._g32 = null;
         this._z32 = null;
@@ -51442,7 +51446,7 @@ function _Hx() {
         this._W42 = 0;
     }
     _t32.prototype = {
-        
+        /// @return the shape type.
         _tU1: function () {
             return this._S42._tU1();
         },
@@ -51454,7 +51458,7 @@ function _Hx() {
                 this._z32._qF1(!0);
                 this._U42 = _Y42;
             }
-        }, 
+        }, /// @return the true if the shape is a sensor.
         _Z42: function () {
             return this._U42;
         },
@@ -51487,10 +51491,10 @@ function _Hx() {
             for (var _X9 = 0; _X9 < this._fW1; ++_X9) {
                 _v32._sW1(this._o42[_X9]._mW1);
             }
-        }, 
+        }, /// @return the parent body.
         _352: function () {
             return this._z32;
-        }, 
+        }, /// @return the next shape.
         _C42: function () {
             return this._232;
         },
@@ -51499,11 +51503,11 @@ function _Hx() {
         },
         _D42: function (data) {
             this._g32 = data;
-        }, 
+        }, /// @param p a point in world coordinates.
         _vU1: function (_ot1) {
             return this._S42._vU1(this._z32._aT1(), _ot1);
-        }, 
-        
+        }, /// @param output the ray-cast results.
+        /// @param input the ray-cast input parameters.
         _wU1: function (_Kr1, _Ir1, _xU1) {
             return this._S42._wU1(_Kr1, _Ir1, this._z32._aT1(), _xU1);
         },
@@ -51609,7 +51613,7 @@ function _Hx() {
     _c52.prototype = { _d52: function (_I42) {}, _e52: function (_2F1) {}, _f52: function (_UJ1) {}, _g52: function (index) {} };
     function _h52() {}
     _h52.prototype = {
-        
+        /// @warning for performance reasons this is only called when the AABBs begin to overlap.
         _G42: function (_G32, _I32) {
             var _i52 = _G32._152();
             var _j52 = _I32._152();
@@ -51624,25 +51628,25 @@ function _Hx() {
         this._m52 = new Array(_zR1);
         this._n52 = new Array(_zR1);
         this._d31 = 0;
-    } 
+    } /// @warning You cannot create/destroy Box2D entities inside these callbacks.
     function _o52() {}
     _o52.prototype = { _p52: function (_F32) {}, _q52: function (_F32) {}, _r52: function (_F32, _s52) {}, _t52: function (_F32, _042) {} };
     function _u52() {}
     _u52.prototype = {
-        
+        /// @return false to terminate the query.
         _v52: function (_2F1) {
             return !1;
-        }, 
+        }, /// @return false to terminate the query.
         _w52: function (index) {
             return !1;
         },
     };
     function _x52() {}
     _x52.prototype = {
-        
-        
-        
-        
+        /// @param fixture the fixture hit by the ray
+        /// @param point the point of initial intersection
+        /// @param normal the normal vector at the point of intersection
+        /// @return -1 to filter, 0 to terminate, fraction to clip the ray for
         _v52: function (_2F1, _rY1, _FU1, _QU1) {},
         _w52: function (index, _rY1, _FU1, _QU1) {
             return 0;
@@ -51754,7 +51758,7 @@ function _Hx() {
         },
         _k62: function (_l62) {
             this._S52 = _l62;
-        }, 
+        }, /// @warning This function is locked during callbacks.
         _IF1: function (_p32) {
             _uR1(this._s32() == !1);
             if (this._s32()) {
@@ -51769,8 +51773,8 @@ function _Hx() {
             this._T52 = _e21;
             ++this._U52;
             return _e21;
-        }, 
-        
+        }, /// @warning This automatically deletes all associated shapes and joints.
+        /// @warning This function is locked during callbacks.
         _m62: function (_e21) {
             _uR1(this._U52 > 0);
             _uR1(this._s32() == !1);
@@ -51820,7 +51824,7 @@ function _Hx() {
             }
             _e21._r62 = !0;
             --this._U52;
-        }, 
+        }, /// @warning This function is locked during callbacks.
         _s62: function (_p32) {
             _uR1(this._s32() == !1);
             if (this._s32()) {
@@ -51858,7 +51862,7 @@ function _Hx() {
                 }
             }
             return _i21;
-        }, 
+        }, /// @warning This function is locked during callbacks.
         _p62: function (_i21) {
             _uR1(this._s32() == !1);
             if (this._s32()) {
@@ -51912,9 +51916,9 @@ function _Hx() {
                     _pV1 = _pV1._Vc1;
                 }
             }
-        }, 
-        
-        
+        }, /// @param timeStep the amount of time to simulate, this should not vary.
+        /// @param velocityIterations for the velocity constraint solver.
+        /// @param positionIterations for the position constraint solver.
         _C62: function (_z52, _C52, _D52) {
             _K52.start();
             if (this._R22 & _C32._D32) {
@@ -51956,7 +51960,7 @@ function _Hx() {
             }
             this._R22 &= ~_C32._E62;
             _K52.stop();
-        }, 
+        }, /// @see SetAutoClearForces
         _G62: function () {
             for (var body = this._T52; body; body = body._C42()) {
                 body._832.x = body._832.y = 0;
@@ -52038,17 +52042,17 @@ function _Hx() {
                     this._S52._6U1(_3T1);
                 }
             }
-        }, 
-        
+        }, /// @param callback a user implemented callback class.
+        /// @param aabb the query box.
         _S62: function (_BW1, _zU1) {
             var _T62 = new _862();
             _T62._v32 = this._w32._x32;
             _T62._BW1 = _BW1;
             this._w32._x32._EW1(_T62, _zU1);
             this._662._S62(_BW1, _zU1);
-        }, 
-        
-        
+        }, /// @param callback a user implemented callback class.
+        /// @param point1 the ray starting point
+        /// @param point2 the ray ending point
         _wU1: function (_BW1, _U62, _V62) {
             var _T62 = new _962();
             _T62._v32 = this._w32._x32;
@@ -52060,13 +52064,13 @@ function _Hx() {
             this._w32._x32._wU1(_T62, _Ir1);
             this._662._wU1(_BW1, _U62, _V62);
         },
-         _W62: function () {
+        /*@returns {b2Body} the head of the world body list. */ _W62: function () {
             return this._T52;
-        }, 
+        }, /// @return the head of the world joint list.
         _A42: function () {
             return this.__22;
-        }, 
-        
+        }, /// @return the head of the world contact list.
+        /// @warning contacts are created and destroyed in the middle of a time step.
         _B42: function () {
             return this._w32._032;
         },
@@ -52141,7 +52145,7 @@ function _Hx() {
         },
         _b72: function () {
             return (this._R22 & _C32._162) == _C32._162;
-        }, 
+        }, /// @param newOrigin the new origin with respect to the old origin
         _QW1: function (_RW1) {
             _uR1((this._R22 & _C32._E62) == 0);
             if ((this._R22 & _C32._E62) == _C32._E62) {
@@ -56489,7 +56493,7 @@ function _Hx() {
             return !0;
         },
     };
-    _2g2._ZQ1(_t62); 
+    _2g2._ZQ1(_t62); /// @warning Do not use a zero or short length.
     function _vh2() {
         this.parent.call(this);
         this.type = _t62._N72;
@@ -57938,7 +57942,7 @@ function _Hx() {
             this._wf2 = data["ratio"];
         },
     };
-    _Ki2._ZQ1(_Lf2); 
+    _Ki2._ZQ1(_Lf2); /// @warning You have to manually destroy the gear joint if joint1 or joint2
     function _6g2(_p32) {
         this.parent.call(this, _p32);
         this._Ni2 = _p32._Li2;
@@ -59071,13 +59075,13 @@ function _Hx() {
         },
     };
     var _fl2 = {
-         _gl2: function (_P22) {
+        /*@param {b2World} world */ _gl2: function (_P22) {
             var _hl2 = [];
-             var _X9;
-             var _il2;
-             var _e21;
-             var _xp1;
-             var _NU1;
+            /*@type Number */ var _X9;
+            /*@type String */ var _il2;
+            /*@type b2Body */ var _e21;
+            /*@type b2Fixture */ var _xp1;
+            /*@type b2Shape */ var _NU1;
             for (_e21 = _P22._W62(); _e21; _e21 = _e21._C42()) {
                 for (_xp1 = _e21._z42(); _xp1; _xp1 = _xp1._C42()) {
                     _NU1 = _xp1._X42();
@@ -59106,7 +59110,7 @@ function _Hx() {
                 _F72.push(_il2);
             }
             var _Nf2 = [];
-             var _i21;
+            /*@type b2Joint */ var _i21;
             for (_i21 = _P22._A42(), _X9 = 0; _i21; _i21 = _i21._C42(), ++_X9) _i21._Pj2 = _X9;
             for (_i21 = _P22._A42(); _i21; _i21 = _i21._C42()) {
                 if (_i21._tU1() === _t62._S72) continue;
@@ -59120,7 +59124,7 @@ function _Hx() {
             var __b1 = { _hl2: _hl2, _kl2: _kl2, _F72: _F72, _Nf2: _Nf2 };
             return __b1;
         },
-         _nl2: function (_il2, _P22, clear) {
+        /*@param {b2World} world */ _nl2: function (_il2, _P22, clear) {
             var _ol2 = JSON.parse(_il2);
             if (clear) {
                 for (var _e21 = _P22._W62(); _e21; ) {
@@ -59630,7 +59634,14 @@ function _Hx() {
         else window["b2"] = _4r1;
     }
 })();
- _0m2 = function () {
+/*
+ * This class lets you encode animated GIF files
+ * Base class :  http://www.java2s.com/Code/Java/2D-Graphics-GUI/AnimatedGifEncoder.htm
+ * @author Kevin Weiner (original Java version - kweiner@fmsware.com)
+ * @author Thibault Imbert (AS3 version - bytearray.org)
+ * @author Kevin Kwok (JavaScript version - https://github.com/antimatter15/jsgif)
+ * @version 0.1 AS3 implementation
+ */ _0m2 = function () {
     for (var _X9 = 0, _Br1 = {}; _X9 < 256; _X9++) _Br1[_X9] = String.fromCharCode(_X9);
     function _1m2() {
         this._2m2 = [];
@@ -59670,22 +59681,58 @@ function _Hx() {
     var _im2 = !1;
     var _jm2 = 10;
     var _km2 = "Generated by jsgif (https://github.com/antimatter15/jsgif/)";
-     var _lm2 = (__l2._lm2 = function _lm2(_am1) {
+    /*
+     * Sets the delay time between each frame, or changes it for subsequent frames
+     * (applies to last frame added)
+     * int delay time in milliseconds
+     * @param ms
+     */ var _lm2 = (__l2._lm2 = function _lm2(_am1) {
         _9m2 = Math.round(_am1 / 10);
     });
-     var _mm2 = (__l2._mm2 = function _mm2(_aL1) {
+    /*
+     * Sets the GIF frame disposal code for the last added frame and any
+     *
+     * subsequent frames. Default is 0 if no transparent color has been set,
+     * otherwise 2.
+     * @param code
+     * int disposal code.
+     */ var _mm2 = (__l2._mm2 = function _mm2(_aL1) {
         if (_aL1 >= 0) dispose = _aL1;
     });
-     var _nm2 = (__l2._nm2 = function _nm2(_sL1) {
+    /*
+     * Sets the number of times the set of GIF frames should be played. Default is
+     * 1; 0 means play indefinitely. Must be invoked before the first image is
+     * added.
+     *
+     * @param iter
+     * int number of iterations.
+     * @return
+     */ var _nm2 = (__l2._nm2 = function _nm2(_sL1) {
         if (_sL1 >= 0) repeat = _sL1;
     });
-     var _om2 = (__l2._om2 = function _om2(_Y9) {
+    /*
+     * Sets the transparent color for the last added frame and any subsequent
+     * frames. Since all colors are subject to modification in the quantization
+     * process, the color in the final palette for each frame closest to the given
+     * color becomes the transparent color for that frame. May be set to null to
+     * indicate no transparent color.
+     * @param
+     * Color to be treated as transparent on display.
+     */ var _om2 = (__l2._om2 = function _om2(_Y9) {
         _n2 = _Y9;
     });
-     var _pm2 = (__l2._pm2 = function _pm2(_Y9) {
+    /*
+     * Sets the comment for the block comment
+     * @param
+     * string to be insterted as comment
+     */ var _pm2 = (__l2._pm2 = function _pm2(_Y9) {
         _km2 = _Y9;
     });
-     var _qm2 = (__l2._qm2 = function _qm2(_U51, _rm2) {
+    /*
+     * The addFrame method takes an incoming BitmapData object to create each frames
+     * @param
+     * BitmapData object to be treated as a GIF's frame
+     */ var _qm2 = (__l2._qm2 = function _qm2(_U51, _rm2) {
         if (_U51 === null || !_am2 || out === null) {
             throw new Error("Please call start method before calling addFrame");
         }
@@ -59736,7 +59783,15 @@ function _Hx() {
         }
         return _np1;
     });
-     var download = (__l2.download = function download(_Em2) {
+    /*
+     * @description: Downloads the encoded gif with the given name
+     * No need of any conversion from the stream data (out) to base64
+     * Solves the issue of large file sizes when there are more frames
+     * and does not involve in creation of any temporary data in the process
+     * so no wastage of memory, and speeds up the process of downloading
+     * to just calling this function.
+     * @parameter {String} filename filename used for downloading the gif
+     */ var download = (__l2.download = function download(_Em2) {
         if (out === null || _gm2 == !1) {
             console.log("Please call start method and add frames and call finish method before calling download");
         } else {
@@ -59768,13 +59823,34 @@ function _Hx() {
         _gm2 = !1;
         _hm2 = !0;
     };
-     var _Hm2 = (__l2._Hm2 = function _Hm2(_Pz1) {
+    /*
+     * * Sets frame rate in frames per second. Equivalent to
+     * <code>setDelay(1000/fps)</code>.
+     * @param fps
+     * float frame rate (frames per second)
+     */ var _Hm2 = (__l2._Hm2 = function _Hm2(_Pz1) {
         if (_Pz1 != 0xf) _9m2 = Math.round(100 / _Pz1);
     });
-     var _Im2 = (__l2._Im2 = function _Im2(_Jm2) {
+    /*
+     * Sets quality of color quantization (conversion of images to the maximum 256
+     * colors allowed by the GIF specification). Lower values (minimum = 1)
+     * produce better colors, but slow processing significantly. 10 is the
+     * default, and produces good color mapping at reasonable speeds. Values
+     * greater than 20 do not yield significant improvements in speed.
+     * @param quality
+     * int greater than 0.
+     * @return
+     */ var _Im2 = (__l2._Im2 = function _Im2(_Jm2) {
         _jm2 = _Jm2;
     });
-     var _sm2 = (__l2._sm2 = function _sm2(_Z9, __9) {
+    /*
+     * Sets the GIF frame size. The default size is the size of the first frame
+     * added if this method is not invoked.
+     * @param w
+     * int frame width.
+     * @param h
+     * int frame width.
+     */ var _sm2 = (__l2._sm2 = function _sm2(_Z9, __9) {
         if (_am2 && !_hm2) return;
         width = _Z9;
         height = __9;
@@ -59782,7 +59858,12 @@ function _Hx() {
         if (height < 1) height = 240;
         _im2 = !0;
     });
-     var start = (__l2.start = function start() {
+    /*
+     * Initiates GIF file creation on the given stream.
+     * @param os
+     * OutputStream on which GIF images are written.
+     * @return false if initial write failed.
+     */ var start = (__l2.start = function start() {
         _kR1();
         var _np1 = !0;
         _gm2 = !1;
@@ -59974,7 +60055,14 @@ function _Hx() {
     });
     return __l2;
 };
- _Zm2 = function () {
+/*
+ * This class handles LZW encoding
+ * Adapted from Jef Poskanzer's Java port by way of J. M. G. Elliott.
+ * @author Kevin Weiner (original Java version - kweiner@fmsware.com)
+ * @author Thibault Imbert (AS3 version - bytearray.org)
+ * @author Kevin Kwok (JavaScript version - https://github.com/antimatter15/jsgif)
+ * @version 0.1 AS3 implementation
+ */ _Zm2 = function () {
     var __l2 = {};
     var _4n2 = -1;
     var _5n2;
@@ -59982,7 +60070,7 @@ function _Hx() {
     var _7n2;
     var _8n2;
     var _9n2;
-    var _an2; 
+    var _an2; // David Rowley (mgardi@watdcsu.waterloo.edu)
     var _bn2 = 12;
     var _cn2 = 5003;
     var _dn2;
@@ -60126,7 +60214,12 @@ function _Hx() {
     _Zm2.apply(this, arguments);
     return __l2;
 };
- _Nm2 = function () {
+/* * This class handles Neural-Net quantization algorithm
+ * @author Kevin Weiner (original Java version - kweiner@fmsware.com)
+ * @author Thibault Imbert (AS3 version - bytearray.org)
+ * @author Kevin Kwok (JavaScript version - https://github.com/antimatter15/jsgif)
+ * @version 0.1 AS3 implementation
+ */ _Nm2 = function () {
     var __l2 = {};
     var _Kn2 = 256;
     var _Ln2 = 499;
@@ -60660,7 +60753,7 @@ function _Jo2() {
         "}\n";
     return _Go2;
 }
- function _Ko2(_Lo2, _fP1) {
+/*@constructor */ function _Ko2(_Lo2, _fP1) {
     var _Mo2 = null;
     var _No2 = null,
         _Oo2 = null,
@@ -60821,7 +60914,7 @@ function _Jo2() {
         _No2._Fp2(_Vo2);
         _zp2._Gp2 = _Ap2._Gp2 = true;
     }
-     this._Hp2 = function (_Ip2) {
+    /*@this {yyWebGL} */ this._Hp2 = function (_Ip2) {
         for (var _X9 in _Wo2) {
             if (!_Wo2.hasOwnProperty(_X9)) continue;
             if (_Wo2[_X9]._xS1(_Ip2)) {
@@ -60832,7 +60925,7 @@ function _Jo2() {
         _No2._Fp2(_Jp2);
         return _Jp2;
     };
-     this._I71 = function (_A81) {
+    /*@this {yyWebGL} */ this._I71 = function (_A81) {
         return _Wo2[_A81];
     };
     function _Kp2(_6B1) {
@@ -60841,10 +60934,10 @@ function _Jo2() {
         }
         return _6B1 == 1;
     }
-     this._Lp2 = function () {
+    /*@this {yyWebGL} */ this._Lp2 = function () {
         return _1p2;
     };
-     this._Mp2 = function (_Np2, _Op2, _Pp2, _Qp2) {
+    /*@this {yyWebGL} */ this._Mp2 = function (_Np2, _Op2, _Pp2, _Qp2) {
         _No2._EM1();
         _Oo2._Mp2(_Np2, _Op2, _Pp2, _Qp2);
     };
@@ -60970,7 +61063,7 @@ function _Jo2() {
         _Tp2._5q2 = _2p2++;
         return true;
     }
-     this._bq2 = function (_cq2, _dq2, _eq2) {
+    /*@this {yyWebGL} */ this._bq2 = function (_cq2, _dq2, _eq2) {
         if (_cq2 == "None" || _dq2 == "None") {
             var _fq2 = { _gq2: null, _hq2: null };
             return _fq2;
@@ -61106,10 +61199,10 @@ function _Jo2() {
         _fq2 = { _gq2: _Tp2, _hq2: _on1 };
         return _fq2;
     };
-     this._yq2 = function () {
+    /*@this {yyWebGL} */ this._yq2 = function () {
         _Qo2++;
     };
-     this._zq2 = function () {
+    /*@this {yyWebGL} */ this._zq2 = function () {
         _No2._EM1();
         _Oo2._y01 = _Qo2;
         _Oo2._Aq2();
@@ -61119,11 +61212,11 @@ function _Jo2() {
         _Mo2.clear(_Mo2.COLOR_BUFFER_BIT);
         _Mo2.colorMask(true, true, true, true);
     };
-     this._Bq2 = function () {
+    /*@this {yyWebGL} */ this._Bq2 = function () {
         _No2._EM1();
         _Oo2._Aq2();
     };
-     this._Cq2 = function (_Qb1, _Tc1) {
+    /*@this {yyWebGL} */ this._Cq2 = function (_Qb1, _Tc1) {
         _Po2._t51(_Z41._c51, _Qb1);
         _Po2._t51(_Z41._d51, _Tc1);
         _Po2._t51(_Z41._e51, _Qb1);
@@ -61132,17 +61225,17 @@ function _Jo2() {
     this._Dq2 = function (_Tk1) {
         _Po2._t51(_Z41._Pm1, _Tk1);
     };
-     this._Hk1 = function (_Eq2) {
+    /*@this {yyWebGL} */ this._Hk1 = function (_Eq2) {
         _Po2._t51(_Z41._Qm1, _Eq2);
     };
-     this._Lk1 = function (_Eq2) {
+    /*@this {yyWebGL} */ this._Lk1 = function (_Eq2) {
         _Po2._t51(_Z41._1n1, _Eq2 ? _Z41._Fq2 : _Z41._Gq2);
     };
-     this._Hq2 = function (_Iq2) {};
-     this._Jk1 = function (_Eq2) {
+    /*@this {yyWebGL} */ this._Hq2 = function (_Iq2) {};
+    /*@this {yyWebGL} */ this._Jk1 = function (_Eq2) {
         _Po2._t51(_Z41._Tm1, _Eq2);
     };
-      this._Sk1 = function (_Jq2, _Kq2, _Lq2, _Mq2) {
+    /*@this {yyWebGL} */ /*@this {yyWebGL} */ this._Sk1 = function (_Jq2, _Kq2, _Lq2, _Mq2) {
         var _hn1 = {
             _Ue1: _Jq2,
             _Ve1: _Kq2,
@@ -61151,19 +61244,19 @@ function _Jo2() {
         };
         _Po2._t51(_Z41._in1, _hn1);
     };
-     this._Cl1 = function (_911, _Nq2, _Oq2, _Pq2) {
+    /*@this {yyWebGL} */ this._Cl1 = function (_911, _Nq2, _Oq2, _Pq2) {
         _No2._EM1();
         _Oo2._Cl1(_911, _Nq2, _Oq2, _Pq2);
     };
-     this._Gl1 = function (_911, _Eq2, _Qq2) {
+    /*@this {yyWebGL} */ this._Gl1 = function (_911, _Eq2, _Qq2) {
         _No2._EM1();
         _Oo2._Gl1(_911, _Eq2, _Qq2);
     };
-     this._Hl1 = function (_Qq2) {
+    /*@this {yyWebGL} */ this._Hl1 = function (_Qq2) {
         _No2._EM1();
         _Oo2._Rq2(_Qq2);
     };
-     this._Jl1 = function (_Sq2) {
+    /*@this {yyWebGL} */ this._Jl1 = function (_Sq2) {
         var _Tq2 = _Sq2[0];
         var end = _Sq2[2];
         var start = end;
@@ -61174,11 +61267,11 @@ function _Jo2() {
         _Po2._t51(_Z41.__m1, end);
         _Po2._t51(_Z41._Ym1, _If);
     };
-     this._Uq2 = function (_Tk1, _Vq2) {
+    /*@this {yyWebGL} */ this._Uq2 = function (_Tk1, _Vq2) {
         _Po2._t51(_Z41._jn1, _Tk1);
         _Po2._t51(_Z41._ln1, (_Vq2 * 255) | 0);
     };
-     this._Wq2 = function (_Xq2, _Yq2) {
+    /*@this {yyWebGL} */ this._Wq2 = function (_Xq2, _Yq2) {
         if (_Yq2) {
             _Po2._qn1(_Xq2, _Z41._xn1, _Z41._yn1);
             _Po2._qn1(_Xq2, _Z41._zn1, _Z41._yn1);
@@ -61187,56 +61280,56 @@ function _Jo2() {
             _Po2._qn1(_Xq2, _Z41._zn1, _Z41._An1);
         }
     };
-     this._Zq2 = function (_Xq2, _Bn1) {
+    /*@this {yyWebGL} */ this._Zq2 = function (_Xq2, _Bn1) {
         _Po2._qn1(_Xq2, _Z41._rn1, _Bn1);
         _Po2._qn1(_Xq2, _Z41._tn1, _Bn1);
     };
-     this.__q2 = function () {
+    /*@this {yyWebGL} */ this.__q2 = function () {
         return _0p2;
     };
-     this._0r2 = function (_Tk1) {
+    /*@this {yyWebGL} */ this._0r2 = function (_Tk1) {
         _Po2._t51(_Z41._1r2, _Tk1);
     };
-     this._2r2 = function (_vp1) {
+    /*@this {yyWebGL} */ this._2r2 = function (_vp1) {
         _Po2._t51(_Z41._3r2, _vp1);
     };
-     this._4r2 = function (_5r2) {
+    /*@this {yyWebGL} */ this._4r2 = function (_5r2) {
         _Po2._t51(_Z41._6r2, _5r2);
     };
-     this._7r2 = function (_8r2) {
+    /*@this {yyWebGL} */ this._7r2 = function (_8r2) {
         _Po2._t51(_Z41._9r2, _8r2);
     };
-     this._Wk1 = function (_ar2) {
+    /*@this {yyWebGL} */ this._Wk1 = function (_ar2) {
         _No2._EM1();
         _Oo2._Wk1(_ar2);
         _To2 = _ar2;
     };
-     this._br2 = function (_ar2, _cr2) {
+    /*@this {yyWebGL} */ this._br2 = function (_ar2, _cr2) {
         var _dr2 = _ar2._lq2[_cr2];
         if (_dr2) {
             return _dr2.index;
         }
         return -1;
     };
-     this._er2 = function (_fG1, _fr2) {
+    /*@this {yyWebGL} */ this._er2 = function (_fG1, _fr2) {
         if (_fG1 != -1) {
             _No2._EM1();
             _Oo2._er2(_fG1, _fr2);
         }
     };
-     this._gr2 = function (_fG1, _fr2) {
+    /*@this {yyWebGL} */ this._gr2 = function (_fG1, _fr2) {
         if (_fG1 != -1) {
             _No2._EM1();
             _Oo2._gr2(_fG1, _fr2);
         }
     };
-     this._hr2 = function (_fG1, _fr2) {
+    /*@this {yyWebGL} */ this._hr2 = function (_fG1, _fr2) {
         if (_fG1 != -1) {
             _No2._EM1();
             _Oo2._hr2(_fG1, _fr2);
         }
     };
-     this._ir2 = function (_fG1, _fr2) {
+    /*@this {yyWebGL} */ this._ir2 = function (_fG1, _fr2) {
         var width = _To2._lq2[_fG1].width;
         var size = _To2._lq2[_fG1].size;
         var _eG1;
@@ -61254,48 +61347,48 @@ function _Jo2() {
         }
         return _eG1;
     };
-     this._kr2 = function (_fG1, _fr2) {
+    /*@this {yyWebGL} */ this._kr2 = function (_fG1, _fr2) {
         if (_fG1 != -1) {
             _No2._EM1();
             _fr2 = _ir2(_fG1, _fr2);
             _Oo2._kr2(_fG1, _fr2);
         }
     };
-     this._lr2 = function (_fG1, _fr2) {
+    /*@this {yyWebGL} */ this._lr2 = function (_fG1, _fr2) {
         if (_fG1 != -1) {
             _No2._EM1();
             _fr2 = this._ir2(_fG1, _fr2);
             _Oo2._lr2(_fG1, _fr2);
         }
     };
-     this._mr2 = function (_Qp1) {
+    /*@this {yyWebGL} */ this._mr2 = function (_Qp1) {
         _No2._EM1();
         _Oo2._mr2(_Qp1);
     };
     this._EM1 = function () {
         _No2._EM1();
     };
-     this._nr2 = function (_891, _a11, _b11, _Mb1, _Nb1, _Lo2) {
+    /*@this {yyWebGL} */ this._nr2 = function (_891, _a11, _b11, _Mb1, _Nb1, _Lo2) {
         _Oo2._nr2(_891, _a11, _b11, _Mb1, _Nb1, _Lo2);
     };
-     this._or2 = function (_Xq2, _891) {
+    /*@this {yyWebGL} */ this._or2 = function (_Xq2, _891) {
         _Z41._pr2(_891 instanceof _pp2, "Texture is not a yyGLTexture", _Z41._qr2);
         _No2._EM1();
         _Oo2._or2(_Xq2, _891);
     };
-     this._2l1 = function (_ng1) {
+    /*@this {yyWebGL} */ this._2l1 = function (_ng1) {
         _No2._EM1();
         _Oo2._rr2(_ng1);
     };
-     this._8l1 = function (_ng1) {
+    /*@this {yyWebGL} */ this._8l1 = function (_ng1) {
         _No2._EM1();
         _Oo2._sr2(_ng1);
     };
-     this._tr2 = function (_ng1) {
+    /*@this {yyWebGL} */ this._tr2 = function (_ng1) {
         _No2._EM1();
         _Oo2._ur2(_ng1);
     };
-     this._vr2 = function (_wr2) {
+    /*@this {yyWebGL} */ this._vr2 = function (_wr2) {
         var __b1 = new _pp2(undefined, _wr2.width, _wr2.height, _Kp2(_wr2.width) && _Kp2(_wr2.height), _wr2, _wr2._xr2);
         return __b1;
     };
@@ -61319,7 +61412,7 @@ function _Jo2() {
         _Mo2.bindTexture(_Mo2.TEXTURE_2D, _Br2);
         _zr2._Nr2 = true;
     };
-     this._Or2 = function (_M71, _ed1, _Pr2, _081) {
+    /*@this {yyWebGL} */ this._Or2 = function (_M71, _ed1, _Pr2, _081) {
         var _ur1 = 0;
         if (_M71) {
             _ur1 |= _Mo2.COLOR_BUFFER_BIT;
@@ -61329,7 +61422,7 @@ function _Jo2() {
         }
         _Oo2._Or2(_ur1, _081);
     };
-     this._xM1 = function (_eP1) {
+    /*@this {yyWebGL} */ this._xM1 = function (_eP1) {
         _No2._EM1();
         _Oo2._xM1(_eP1);
     };
@@ -61353,7 +61446,7 @@ function _Jo2() {
         }
         return max;
     }
-     this._Ur2 = function (_wr2, _a11, _b11, _Mb1, _Nb1, _2e1, _3e1, _Vr2) {
+    /*@this {yyWebGL} */ this._Ur2 = function (_wr2, _a11, _b11, _Mb1, _Nb1, _2e1, _3e1, _Vr2) {
         this._EM1();
         var _Wr2 = new Uint8Array(_Mb1 * _Nb1 * 4);
         _Mo2.readPixels(_a11, __o2 - (_b11 + _Nb1), _Mb1, _Nb1, _Mo2.RGBA, _Mo2.UNSIGNED_BYTE, _Wr2);
@@ -61382,7 +61475,7 @@ function _Jo2() {
         _Oo2._ls1();
         return __b1;
     };
-     this._0s2 = function (_wr2, _1s2, _a11, _b11, _Mb1, _Nb1, _2e1, _3e1) {
+    /*@this {yyWebGL} */ this._0s2 = function (_wr2, _1s2, _a11, _b11, _Mb1, _Nb1, _2e1, _3e1) {
         this._Bq2();
         var _2s2 = _Mo2.getParameter(_Mo2.FRAMEBUFFER_BINDING);
         var _Yr2 = new ArrayBuffer(_Mb1 * _Nb1 * 4);
@@ -61433,7 +61526,7 @@ function _Jo2() {
         _Oo2._ls1();
         return __b1;
     };
-     this._6s2 = function (_wr2, _7s2, _Mb1, _Nb1) {
+    /*@this {yyWebGL} */ this._6s2 = function (_wr2, _7s2, _Mb1, _Nb1) {
         var _Z9 = _Tr2(_Mb1);
         var __9 = _Tr2(_Nb1);
         var _Br2 = _Mo2.getParameter(_Mo2.TEXTURE_BINDING_2D);
@@ -61444,7 +61537,7 @@ function _Jo2() {
         _Oo2._ls1();
         return __b1;
     };
-     this._8s2 = function (_wr2, _7s2, _Mb1, _Nb1) {
+    /*@this {yyWebGL} */ this._8s2 = function (_wr2, _7s2, _Mb1, _Nb1) {
         var _Yr2 = new ArrayBuffer(_Mb1 * _Nb1 * 4);
         var _9s2 = new DataView(_Yr2);
         for (var _W11 = 0; _W11 < _Mb1 * _Nb1; _W11++) {
@@ -61452,7 +61545,7 @@ function _Jo2() {
         }
         return this._6s2(_wr2, new Uint8Array(_Yr2), _Mb1, _Nb1);
     };
-     this._as2 = function (_891, _f41) {
+    /*@this {yyWebGL} */ this._as2 = function (_891, _f41) {
         _Z41._pr2(_891 instanceof _pp2, "Texture is not a yyGLTexture", _Z41._qr2);
         if (!_bs2(_891, _Z41._cs2)) {
             _ds2(_891);
@@ -61480,7 +61573,7 @@ function _Jo2() {
         _Mo2.bindTexture(_Mo2.TEXTURE_2D, _Br2);
         return __b1;
     };
-     this._gs2 = function (_a11, _b11) {
+    /*@this {yyWebGL} */ this._gs2 = function (_a11, _b11) {
         this._EM1();
         var _Xr2 = new Uint8Array(16);
         _Mo2.readPixels(_a11, __o2 - _b11, 1, 1, _Mo2.RGBA, _Mo2.UNSIGNED_BYTE, _Xr2);
@@ -61488,7 +61581,7 @@ function _Jo2() {
         _Oo2._ls1();
         return _L31;
     };
-     this._hs2 = function (_1s2, _a11, _b11) {
+    /*@this {yyWebGL} */ this._hs2 = function (_1s2, _a11, _b11) {
         this._Bq2();
         var _2s2 = _Mo2.getParameter(_Mo2.FRAMEBUFFER_BINDING);
         var _Xr2 = new Uint8Array(16);
@@ -61499,7 +61592,7 @@ function _Jo2() {
         _Oo2._ls1();
         return _L31;
     };
-     this._is2 = function (_1s2, _a11, _b11, _Mb1, _Nb1) {
+    /*@this {yyWebGL} */ this._is2 = function (_1s2, _a11, _b11, _Mb1, _Nb1) {
         this._Bq2();
         var _2s2 = _Mo2.getParameter(_Mo2.FRAMEBUFFER_BINDING);
         var _Xr2 = new Uint8Array(_Mb1 * _Nb1 * 4);
@@ -61509,7 +61602,7 @@ function _Jo2() {
         _Oo2._ls1();
         return _Xr2;
     };
-     this._js2 = function (_Mb1, _Nb1) {
+    /*@this {yyWebGL} */ this._js2 = function (_Mb1, _Nb1) {
         var _Br2 = _Mo2.getParameter(_Mo2.TEXTURE_BINDING_2D);
         var _2s2 = _Mo2.getParameter(_Mo2.FRAMEBUFFER_BINDING);
         var _ks2 = _Mo2.getParameter(_Mo2.RENDERBUFFER_BINDING);
@@ -61536,28 +61629,28 @@ function _Jo2() {
         var _ps2 = { _hM1: _ls2, _qs2: _os2, _Kr2: _ns2 };
         return _ps2;
     };
-     this._rs2 = function (_1s2) {
+    /*@this {yyWebGL} */ this._rs2 = function (_1s2) {
         _Mo2.deleteFramebuffer(_1s2._hM1);
         _Mo2.deleteRenderbuffer(_1s2._qs2);
         _Mo2.deleteTexture(_1s2._Kr2._Kr2);
         _1s2._Kr2 = null;
     };
-     this._ss2 = function (_ts2) {
+    /*@this {yyWebGL} */ this._ss2 = function (_ts2) {
         _Mo2.deleteTexture(_ts2);
     };
-     this._us2 = function (_891) {
+    /*@this {yyWebGL} */ this._us2 = function (_891) {
         _Z41._pr2(_891 instanceof _pp2, "NULL texture is not a yyGLTexture", _Z41._qr2);
         _Oo2._vs2 = _891;
     };
-     this._v51 = function (_w71, _891, _A81, _ws2) {
+    /*@this {yyWebGL} */ this._v51 = function (_w71, _891, _A81, _ws2) {
         _Z41._pr2(_891 == null || _891 instanceof _pp2, "Texture is not a yyGLTexture", _Z41._qr2);
         return _No2._v51(_w71, _891, _A81, _ws2, _Wo2[_A81], _Qo2);
     };
-     this._991 = function (_w71, _891, _xs2, _ys2) {
+    /*@this {yyWebGL} */ this._991 = function (_w71, _891, _xs2, _ys2) {
         _Z41._pr2(_891 == null || _891 instanceof _pp2, "Texture is not a yyGLTexture", _Z41._qr2);
         _No2._zs2(_w71, _891, _xs2, _ys2);
     };
-     this._As2 = function (_YK1) {
+    /*@this {yyWebGL} */ this._As2 = function (_YK1) {
         var _f31 = _YK1._f31._o51;
         if (!_bs2(_f31, _Z41._cs2)) {
             _ds2(_f31);
@@ -61731,7 +61824,7 @@ var _Z41 = {
     },
 };
 Object.freeze(_Z41);
- function _fp2(_Wt2) {
+/*@constructor */ function _fp2(_Wt2) {
     var _Mo2 = this._op2;
     var _Xt2 = 0,
         _Yt2 = 1,
@@ -61833,10 +61926,10 @@ Object.freeze(_Z41);
         _zu2[0] = 1;
         _zu2[1] = 1;
     }
-     this._ls1 = function () {
+    /*@this {yyCommandBuilder} */ this._ls1 = function () {
         _Tu2();
     };
-     this._Wk1 = function (_3v2) {
+    /*@this {yyCommandBuilder} */ this._Wk1 = function (_3v2) {
         if (_3v2 != _Au2) {
             _Bu2 = null;
             _yu2.push(_du2);
@@ -61844,7 +61937,7 @@ Object.freeze(_Z41);
             _Au2 = _3v2;
         }
     };
-     this._or2 = function (_Xq2, _891) {
+    /*@this {yyCommandBuilder} */ this._or2 = function (_Xq2, _891) {
         if (_zu2[_Xq2] == _891) {
             return;
         }
@@ -61853,7 +61946,7 @@ Object.freeze(_Z41);
         _yu2.push(_891);
         _yu2.push(_Xq2);
     };
-     this._mr2 = function (_No1) {
+    /*@this {yyCommandBuilder} */ this._mr2 = function (_No1) {
         _yu2.push(_No1);
     };
     this._nr2 = function (_891, _a11, _b11, _Mb1, _Nb1, _4v2) {
@@ -61865,140 +61958,140 @@ Object.freeze(_Z41);
         _yu2.push(_Nb1);
         _yu2.push(_4v2);
     };
-     this._5v2 = function (_6v2) {
+    /*@this {yyCommandBuilder} */ this._5v2 = function (_6v2) {
         if (_Bu2 == _6v2) return;
         _Bu2 = _6v2;
         _yu2.push(_8u2);
         _yu2.push(_6v2);
     };
-     this._7v2 = function (_Um1, _8v2) {
+    /*@this {yyCommandBuilder} */ this._7v2 = function (_Um1, _8v2) {
         _yu2.push(_Zt2);
         _yu2.push(_Um1);
         _yu2.push(_8v2);
     };
-     this._9v2 = function (_Um1, _8v2) {
+    /*@this {yyCommandBuilder} */ this._9v2 = function (_Um1, _8v2) {
         _yu2.push(__t2);
         _yu2.push(_Um1);
         _yu2.push(_8v2);
     };
-     this._av2 = function (_Um1, _8v2) {
+    /*@this {yyCommandBuilder} */ this._av2 = function (_Um1, _8v2) {
         _yu2.push(_0u2);
         _yu2.push(_Um1);
         _yu2.push(_8v2);
     };
-     this._bv2 = function (_Um1, _8v2) {
+    /*@this {yyCommandBuilder} */ this._bv2 = function (_Um1, _8v2) {
         _yu2.push(_1u2);
         _yu2.push(_Um1);
         _yu2.push(_8v2);
     };
-     this._cv2 = function (_Um1, _8v2) {
+    /*@this {yyCommandBuilder} */ this._cv2 = function (_Um1, _8v2) {
         _yu2.push(_2u2);
         _yu2.push(_Um1);
         _yu2.push(_8v2);
     };
-     this._U72 = function (_Um1, _8v2) {
+    /*@this {yyCommandBuilder} */ this._U72 = function (_Um1, _8v2) {
         _yu2.push(_3u2);
         _yu2.push(_Um1);
         _yu2.push(_8v2);
     };
-     this._sr2 = function (_ng1) {
+    /*@this {yyCommandBuilder} */ this._sr2 = function (_ng1) {
         _yu2.push(_5u2);
         _yu2.push(new _Fk1(_ng1));
     };
-     this._rr2 = function (_ng1) {
+    /*@this {yyCommandBuilder} */ this._rr2 = function (_ng1) {
         _yu2.push(_6u2);
         _yu2.push(new _Fk1(_ng1));
     };
-     this._ur2 = function (_ng1) {
+    /*@this {yyCommandBuilder} */ this._ur2 = function (_ng1) {
         _yu2.push(_4u2);
         _yu2.push(new _Fk1(_ng1));
     };
-     this._Mp2 = function (_a11, _b11, _Mb1, _Nb1) {
+    /*@this {yyCommandBuilder} */ this._Mp2 = function (_a11, _b11, _Mb1, _Nb1) {
         _yu2.push(_7u2);
         _yu2.push(_a11);
         _yu2.push(_b11);
         _yu2.push(_Mb1);
         _yu2.push(_Nb1);
     };
-     this._Or2 = function (_dv2, _081) {
+    /*@this {yyCommandBuilder} */ this._Or2 = function (_dv2, _081) {
         _yu2.push(_9u2);
         _yu2.push(_dv2);
         _yu2.push(~~_081);
     };
-     this._xM1 = function (_ev2) {
+    /*@this {yyCommandBuilder} */ this._xM1 = function (_ev2) {
         _yu2.push(_au2);
         _yu2.push(_ev2);
     };
-     this._fv2 = function (_f41, _an1, _bn1, _cn1) {
+    /*@this {yyCommandBuilder} */ this._fv2 = function (_f41, _an1, _bn1, _cn1) {
         _yu2.push(_bu2);
         _yu2.push(_f41);
         _yu2.push(_an1);
         _yu2.push(_bn1);
         _yu2.push(_cn1);
     };
-     this._Cq2 = function (_Qb1, _Tc1) {
+    /*@this {yyCommandBuilder} */ this._Cq2 = function (_Qb1, _Tc1) {
         _yu2.push(_cu2);
         _yu2.push(_Qb1);
         _yu2.push(_Tc1);
     };
-     this._er2 = function (_gv2, _fr2) {
+    /*@this {yyCommandBuilder} */ this._er2 = function (_gv2, _fr2) {
         _yu2.push(_eu2);
         _yu2.push(_gv2);
         _yu2.push(_fr2);
     };
-     this._gr2 = function (_gv2, _fr2) {
+    /*@this {yyCommandBuilder} */ this._gr2 = function (_gv2, _fr2) {
         _yu2.push(_fu2);
         _yu2.push(_gv2);
         _yu2.push(_fr2);
     };
-     this._kr2 = function (_gv2, _fr2) {
+    /*@this {yyCommandBuilder} */ this._kr2 = function (_gv2, _fr2) {
         _yu2.push(_eu2);
         _yu2.push(_gv2);
         _yu2.push(_fr2);
     };
-     this._lr2 = function (_gv2, _fr2) {
+    /*@this {yyCommandBuilder} */ this._lr2 = function (_gv2, _fr2) {
         _yu2.push(_fu2);
         _yu2.push(_gv2);
         _yu2.push(_fr2);
     };
-     this._hr2 = function (_gv2, _fr2) {
+    /*@this {yyCommandBuilder} */ this._hr2 = function (_gv2, _fr2) {
         _yu2.push(_fu2);
         _yu2.push(_gv2);
         _yu2.push(_fr2);
     };
-     this._t51 = function (_hv2, _iv2) {
+    /*@this {yyCommandBuilder} */ this._t51 = function (_hv2, _iv2) {
         _yu2.push(_gu2);
         _yu2.push(_hv2);
         _yu2.push(_iv2);
     };
-     this._qn1 = function (_Xq2, _jv2, _kv2) {
+    /*@this {yyCommandBuilder} */ this._qn1 = function (_Xq2, _jv2, _kv2) {
         _yu2.push(_hu2);
         _yu2.push(_Xq2);
         _yu2.push(_jv2);
         _yu2.push(_kv2);
     };
-     this._Cl1 = function (__e1, _lv2, _mv2, _nv2) {
+    /*@this {yyCommandBuilder} */ this._Cl1 = function (__e1, _lv2, _mv2, _nv2) {
         _yu2.push(_iu2);
         _yu2.push(__e1);
         _yu2.push(new Float32Array(_lv2));
         _yu2.push(new Float32Array(_mv2));
         _yu2.push(new Float32Array(_nv2));
     };
-     this._Rq2 = function (_If) {
+    /*@this {yyCommandBuilder} */ this._Rq2 = function (_If) {
         _yu2.push(_ju2);
         _yu2.push(new Float32Array(_If));
     };
-     this._ov2 = function (_pv2) {
+    /*@this {yyCommandBuilder} */ this._ov2 = function (_pv2) {
         _yu2.push(_ku2);
         _yu2.push(new Float32Array(_pv2));
     };
-     this._Gl1 = function (__e1, enable, _If) {
+    /*@this {yyCommandBuilder} */ this._Gl1 = function (__e1, enable, _If) {
         _yu2.push(_lu2);
         _yu2.push(__e1);
         _yu2.push(enable);
         _yu2.push(_If);
     };
-     this._Uq2 = function (_Tk1, _qv2) {
+    /*@this {yyCommandBuilder} */ this._Uq2 = function (_Tk1, _qv2) {
         _yu2.push(_mu2);
         _yu2.push(_Tk1);
         _yu2.push(_qv2);
@@ -62445,7 +62538,7 @@ Object.freeze(_Z41);
             }
         }
     }
-     this._Aq2 = function () {
+    /*@this {yyCommandBuilder} */ this._Aq2 = function () {
         var _X9, error, _dG1, _eG1, _2w2, _En1, _f31, _u51, __e1, _L31, enable, _3w2, _dr2;
         _X9 = 0;
         while (_X9 < _yu2.length) {
@@ -62719,7 +62812,7 @@ Object.freeze(_Z41);
         _yu2.length = 0;
     };
 }
- function _pp2(_7w2, _931, _a31, _8w2, _wr2, _9w2, _aw2) {
+/*@constructor */ function _pp2(_7w2, _931, _a31, _8w2, _wr2, _9w2, _aw2) {
     var _Mo2 = this._op2;
     var _bw2, _cw2, _Vz1, _Xz1, _dw2, _ew2, _fw2, _R22;
     var _gw2;
@@ -62912,7 +63005,7 @@ function _Pw2(_Qw2, _Rw2, _Sw2) {
         },
     });
 }
- function _hp2(_Xw2, _Yw2, _Zw2, _Wt2) {
+/*@constructor */ function _hp2(_Xw2, _Yw2, _Zw2, _Wt2) {
     var _Mo2 = this._op2;
     var __w2 = null;
     var _232 = null;
@@ -63087,7 +63180,7 @@ function _Pw2(_Qw2, _Rw2, _Sw2) {
         _4x2 = false;
     };
 }
- function _rp2(_Wt2) {
+/*@constructor */ function _rp2(_Wt2) {
     var _Mo2 = this._op2;
     var _9x2 = [];
     Object.defineProperties(this, {
@@ -63110,7 +63203,7 @@ function _Pw2(_Qw2, _Rw2, _Sw2) {
         _9x2[_Z41._xn1] = _Z41._An1;
         _9x2[_Z41._zn1] = _Z41._An1;
     })();
-     this._Mr2 = function (_eP1) {
+    /*@this {yyTextureSamplerState} */ this._Mr2 = function (_eP1) {
         var _ax2 = _9x2;
         _Mo2.texParameteri(_eP1, _Mo2.TEXTURE_MAG_FILTER, _ax2[_Z41._rn1] == _Z41._sn1 ? _Mo2.LINEAR : _Mo2.NEAREST);
         _Mo2.texParameteri(_eP1, _Mo2.TEXTURE_MIN_FILTER, _ax2[_Z41._tn1] == _Z41._sn1 ? _Mo2.LINEAR : _Mo2.NEAREST);
@@ -63118,7 +63211,7 @@ function _Pw2(_Qw2, _Rw2, _Sw2) {
         _Mo2.texParameteri(_eP1, _Mo2.TEXTURE_WRAP_T, _ax2[_Z41._zn1] == _Z41._An1 ? _Mo2.CLAMP_TO_EDGE : _Mo2.REPEAT);
     };
 }
- function _G71(_781, _bx2, _cx2) {
+/*@constructor */ function _G71(_781, _bx2, _cx2) {
     var _Mo2 = this._op2;
     this._dx2 = null;
     this._U71 = null;
@@ -63181,7 +63274,7 @@ function _Pw2(_Qw2, _Rw2, _Sw2) {
         }
         return false;
     }
-     this._px2 = function (_xs2) {
+    /*@this {yyVBuffer} */ this._px2 = function (_xs2) {
         if (_xs2._z51() === this._z51()) {
             var _491 = _xs2._A51 * _xs2._z51();
             var offset = this._A51 * this._z51();
@@ -63197,7 +63290,7 @@ function _Pw2(_Qw2, _Rw2, _Sw2) {
             this._A51 += _xs2._A51;
         }
     };
-     this._291 = function () {
+    /*@this {yyVBuffer} */ this._291 = function () {
         if (this._A51 < this.max) {
             var _491 = this._A51 * this._z51();
             var _rx2 = new ArrayBuffer(_491);
@@ -63214,7 +63307,7 @@ function _Pw2(_Qw2, _Rw2, _Sw2) {
         this.__71 = null;
         this._G51 = null;
     };
-     this._J71 = function (_tx2) {
+    /*@this {yyVBuffer} */ this._J71 = function (_tx2) {
         if (this._A51 + _tx2 > this.max) {
             var _ux2 = this.max * 2;
             this.max = _ux2;
@@ -63226,10 +63319,10 @@ function _Pw2(_Qw2, _Rw2, _Sw2) {
         }
         this._A51 += _tx2;
     };
-     this._z51 = function () {
+    /*@this {yyVBuffer} */ this._z51 = function () {
         return this._Tv2._u81;
     };
-     this._5w2 = function () {
+    /*@this {yyVBuffer} */ this._5w2 = function () {
         _Mo2.bindBuffer(_Mo2.ARRAY_BUFFER, this._Ov2);
         var _vx2 = new Int8Array(this._dx2, 0, this._A51 * this._Tv2._u81);
         _Mo2.bufferSubData(_Mo2.ARRAY_BUFFER, 0, _vx2);
@@ -63237,7 +63330,7 @@ function _Pw2(_Qw2, _Rw2, _Sw2) {
         this._4w2 = false;
     };
 }
- function _ip2(_Zw2, _wx2) {
+/*@constructor */ function _ip2(_Zw2, _wx2) {
     var _Mo2 = this._op2;
     var _xx2 = [];
     var _yx2 = 0,
@@ -63247,14 +63340,14 @@ function _Pw2(_Qw2, _Rw2, _Sw2) {
         _Au2 = null;
     var _5x2 = _Zw2;
     var _Bx2 = _wx2;
-     this._Fp2 = function (_A81) {
+    /*@this {yyVBufferManager} */ this._Fp2 = function (_A81) {
         if (_xx2[_A81]) {
             debug("WARNING: Vertex format has already been registered\n");
         } else {
             _xx2[_A81] = new _jc1();
         }
     };
-     this._zs2 = function (_w71, _891, _xs2, _ys2) {
+    /*@this {yyVBufferManager} */ this._zs2 = function (_w71, _891, _xs2, _ys2) {
         var size = _xs2._A51 - _ys2;
         switch (_w71) {
             case _Z41._w51:
@@ -63289,7 +63382,7 @@ function _Pw2(_Qw2, _Rw2, _Sw2) {
                 break;
         }
     };
-     this._EM1 = function () {
+    /*@this {yyVBufferManager} */ this._EM1 = function () {
         if (_zx2 == null) {
             _Bx2._EM1();
             return;
@@ -63299,7 +63392,7 @@ function _Pw2(_Qw2, _Rw2, _Sw2) {
         _Ax2 = _Z41._Cs2;
         _Bx2._EM1();
     };
-     this._v51 = function (_w71, _Cx2, _A81, _Dx2, _bx2, _Ex2) {
+    /*@this {yyVBufferManager} */ this._v51 = function (_w71, _Cx2, _A81, _Dx2, _bx2, _Ex2) {
         var _X9, _Fx2, _u51, _Gx2;
         _Gx2 = _Cx2;
         if (_zx2 != null) {
@@ -63341,7 +63434,7 @@ function _Pw2(_Qw2, _Rw2, _Sw2) {
         return _u51;
     };
 }
- function _qp2() {
+/*@constructor */ function _qp2() {
     var _Mo2 = this._op2;
     var _Ix2 = 1,
         _Jx2 = false,
@@ -63425,27 +63518,27 @@ function _Pw2(_Qw2, _Rw2, _Sw2) {
         }
         _Kx2.push(_Uv2);
     }
-     this._Px2 = function () {
+    /*@this {yyVertexFormat} */ this._Px2 = function () {
         _Da1(_Z41._G81, _Z41._F81, _Ix2);
         _Ix2 = _Ix2 << 1;
     };
-     this._Bp2 = function () {
+    /*@this {yyVertexFormat} */ this._Bp2 = function () {
         _Da1(_Z41._I81, _Z41._F81, _Ix2);
         _Ix2 = _Ix2 << 1;
     };
-     this._Cp2 = function () {
+    /*@this {yyVertexFormat} */ this._Cp2 = function () {
         _Da1(_Z41._L81, _Z41._K81, _Ix2);
         _Ix2 = _Ix2 << 1;
     };
-     this._Ep2 = function () {
+    /*@this {yyVertexFormat} */ this._Ep2 = function () {
         _Da1(_Z41._I81, _Z41._U81, _Ix2);
         _Ix2 = _Ix2 << 1;
     };
-     this._Dp2 = function () {
+    /*@this {yyVertexFormat} */ this._Dp2 = function () {
         _Da1(_Z41._G81, _Z41._S81, _Ix2);
         _Ix2 = _Ix2 << 1;
     };
-     this._Qx2 = function (_l81, _k81) {
+    /*@this {yyVertexFormat} */ this._Qx2 = function (_l81, _k81) {
         if (_l81 < _Z41._W81 || _l81 > _Z41._Os2) {
             debug("ERROR vertex_format_add_custom: illegal types");
             return;
@@ -63457,7 +63550,7 @@ function _Pw2(_Qw2, _Rw2, _Sw2) {
         _Da1(_l81, _k81, _Ix2);
         _Ix2 = _Ix2 << 1;
     };
-     this._xS1 = function (_Ip2) {
+    /*@this {yyVertexFormat} */ this._xS1 = function (_Ip2) {
         if (_Kx2.length !== _Ip2._o81.length) {
             return false;
         }
@@ -63767,20 +63860,66 @@ try {
         {}
     ).__l2;
 } catch (e) {}
- function Long(_eL1, _xL1, _Xx2) {
-     this._eL1 = _eL1 | 0;
-     this._xL1 = _xL1 | 0;
-     this._Xx2 = !!_Xx2;
+/*
+ * Constructs a 64 bit two's-complement integer, given its low and high 32 bit values as *signed* integers.
+ *  See the from* functions below for more convenient ways of constructing Longs.
+ * @exports Long
+ * @class A Long class for representing a 64 bit two's-complement integer value.
+ * @param {number} low The low (signed) 32 bits of the long
+ * @param {number} high The high (signed) 32 bits of the long
+ * @param {boolean=} unsigned Whether unsigned or not, defaults to signed
+ * @constructor
+ */ function Long(_eL1, _xL1, _Xx2) {
+    /*
+     * The low 32 bits as a signed value.
+     * @type {number}
+     */ this._eL1 = _eL1 | 0;
+    /*
+     * The high 32 bits as a signed value.
+     * @type {number}
+     */ this._xL1 = _xL1 | 0;
+    /*
+     * Whether unsigned or not.
+     * @type {boolean}
+     */ this._Xx2 = !!_Xx2;
 }
- Long.prototype.__isLong__;
+/*
+ * An indicator used to reliably determine if an object is a Long or not.
+ * @type {boolean}
+ * @const
+ * @private
+ */ Long.prototype.__isLong__;
 Object.defineProperty(Long.prototype, "__isLong__", { value: !0 });
- function _Yx2(_cq1) {
+/*
+ * @function
+ * @param {*} obj Object
+ * @returns {boolean}
+ * @inner
+ */ function _Yx2(_cq1) {
     return (_cq1 && _cq1["__isLong__"]) === true;
 }
- Long._Yx2 = _Yx2;
- var _Zx2 = {};
- var __x2 = {};
- function _0y2(value, _Xx2) {
+/*
+ * Tests if the specified object is a Long.
+ * @function
+ * @param {*} obj Object
+ * @returns {boolean}
+ */ Long._Yx2 = _Yx2;
+/*
+ * A cache of the Long representations of small integer values.
+ * @type {!Object}
+ * @inner
+ */ var _Zx2 = {};
+/*
+ * A cache of the Long representations of small unsigned integer values.
+ * @type {!Object}
+ * @inner
+ */ var __x2 = {};
+/*
+ * @param {number} value
+ * @param {boolean=} unsigned
+ * @returns {!Long}
+ * @inner
+ */ function _0y2(value, _Xx2) {
     var _cq1, _1y2, _c31;
     if (_Xx2) {
         value >>>= 0;
@@ -63802,8 +63941,19 @@ Object.defineProperty(Long.prototype, "__isLong__", { value: !0 });
         return _cq1;
     }
 }
- Long._0y2 = _0y2;
- function _3y2(value, _Xx2) {
+/*
+ * Returns a Long representing the given 32 bit integer value.
+ * @function
+ * @param {number} value The 32 bit integer in question
+ * @param {boolean=} unsigned Whether unsigned or not, defaults to signed
+ * @returns {!Long} The corresponding Long value
+ */ Long._0y2 = _0y2;
+/*
+ * @param {number} value
+ * @param {boolean=} unsigned
+ * @returns {!Long}
+ * @inner
+ */ function _3y2(value, _Xx2) {
     if (isNaN(value)) return _Xx2 ? _4y2 : ZERO;
     if (_Xx2) {
         if (value < 0) return _4y2;
@@ -63815,13 +63965,45 @@ Object.defineProperty(Long.prototype, "__isLong__", { value: !0 });
     if (value < 0) return _3y2(-value, _Xx2)._8y2();
     return _2y2(value % _9y2 | 0, (value / _9y2) | 0, _Xx2);
 }
- Long._3y2 = _3y2;
- function _2y2(_cL1, _bL1, _Xx2) {
+/*
+ * Returns a Long representing the given value, provided that it is a finite number. Otherwise, zero is returned.
+ * @function
+ * @param {number} value The number in question
+ * @param {boolean=} unsigned Whether unsigned or not, defaults to signed
+ * @returns {!Long} The corresponding Long value
+ */ Long._3y2 = _3y2;
+/*
+ * @param {number} lowBits
+ * @param {number} highBits
+ * @param {boolean=} unsigned
+ * @returns {!Long}
+ * @inner
+ */ function _2y2(_cL1, _bL1, _Xx2) {
     return new Long(_cL1, _bL1, _Xx2);
 }
- Long._2y2 = _2y2;
- var _ay2 = Math.pow;
- function _by2(_yp1, _Xx2, _cy2) {
+/*
+ * Returns a Long representing the 64 bit integer that comes by concatenating the given low and high bits. Each is
+ *  assumed to use 32 bits.
+ * @function
+ * @param {number} lowBits The low 32 bits
+ * @param {number} highBits The high 32 bits
+ * @param {boolean=} unsigned Whether unsigned or not, defaults to signed
+ * @returns {!Long} The corresponding Long value
+ */ Long._2y2 = _2y2;
+/*
+ * @function
+ * @param {number} base
+ * @param {number} exponent
+ * @returns {number}
+ * @inner
+ */ var _ay2 = Math.pow;
+/*
+ * @param {string} str
+ * @param {(boolean|number)=} unsigned
+ * @param {number=} radix
+ * @returns {!Long}
+ * @inner
+ */ function _by2(_yp1, _Xx2, _cy2) {
     if (_yp1.length === 0) throw Error("empty string");
     if (_yp1 === "NaN" || _yp1 === "Infinity" || _yp1 === "+Infinity" || _yp1 === "-Infinity") return ZERO;
     if (typeof _Xx2 === "number") {
@@ -63852,44 +64034,150 @@ Object.defineProperty(Long.prototype, "__isLong__", { value: !0 });
     result._Xx2 = _Xx2;
     return result;
 }
- Long._by2 = _by2;
- function _fy2(_r91, _Xx2) {
+/*
+ * Returns a Long representation of the given string, written using the specified radix.
+ * @function
+ * @param {string} str The textual representation of the Long
+ * @param {(boolean|number)=} unsigned Whether unsigned or not, defaults to signed
+ * @param {number=} radix The radix in which the text is written (2-36), defaults to 10
+ * @returns {!Long} The corresponding Long value
+ */ Long._by2 = _by2;
+/*
+ * @function
+ * @param {!Long|number|string|!{low: number, high: number, unsigned: boolean}} val
+ * @param {boolean=} unsigned
+ * @returns {!Long}
+ * @inner
+ */ function _fy2(_r91, _Xx2) {
     if (typeof _r91 === "number") return _3y2(_r91, _Xx2);
     if (typeof _r91 === "string") return _by2(_r91, _Xx2);
     return _2y2(_r91._eL1, _r91._xL1, typeof _Xx2 === "boolean" ? _Xx2 : _r91._Xx2);
 }
- Long._fy2 = _fy2;
- var _gy2 = 1 << 16;
- var _hy2 = 1 << 24;
- var _9y2 = _gy2 * _gy2;
- var _5y2 = _9y2 * _9y2;
- var _7y2 = _5y2 / 2;
- var _iy2 = _0y2(_hy2);
- var ZERO = _0y2(0);
- Long.ZERO = ZERO;
- var _4y2 = _0y2(0, !0);
- Long._4y2 = _4y2;
- var ONE = _0y2(1);
- Long.ONE = ONE;
- var _jy2 = _0y2(1, !0);
- Long._jy2 = _jy2;
- var _ky2 = _0y2(-1);
- Long._ky2 = _ky2;
- var MAX_VALUE = _2y2(0xffffffff | 0, 0x7fffffff | 0, !1);
- Long.MAX_VALUE = MAX_VALUE;
- var _6y2 = _2y2(0xffffffff | 0, 0xffffffff | 0, !0);
- Long._6y2 = _6y2;
- var MIN_VALUE = _2y2(0, 0x80000000 | 0, !1);
- Long.MIN_VALUE = MIN_VALUE;
- var _ly2 = Long.prototype;
- _ly2._my2 = function _my2() {
+/*
+ * Converts the specified value to a Long using the appropriate from* function for its type.
+ * @function
+ * @param {!Long|number|string|!{low: number, high: number, unsigned: boolean}} val Value
+ * @param {boolean=} unsigned Whether unsigned or not, defaults to signed
+ * @returns {!Long}
+ */ Long._fy2 = _fy2;
+/*
+ * @type {number}
+ * @const
+ * @inner
+ */ var _gy2 = 1 << 16;
+/*
+ * @type {number}
+ * @const
+ * @inner
+ */ var _hy2 = 1 << 24;
+/*
+ * @type {number}
+ * @const
+ * @inner
+ */ var _9y2 = _gy2 * _gy2;
+/*
+ * @type {number}
+ * @const
+ * @inner
+ */ var _5y2 = _9y2 * _9y2;
+/*
+ * @type {number}
+ * @const
+ * @inner
+ */ var _7y2 = _5y2 / 2;
+/*
+ * @type {!Long}
+ * @const
+ * @inner
+ */ var _iy2 = _0y2(_hy2);
+/*
+ * @type {!Long}
+ * @inner
+ */ var ZERO = _0y2(0);
+/*
+ * Signed zero.
+ * @type {!Long}
+ */ Long.ZERO = ZERO;
+/*
+ * @type {!Long}
+ * @inner
+ */ var _4y2 = _0y2(0, !0);
+/*
+ * Unsigned zero.
+ * @type {!Long}
+ */ Long._4y2 = _4y2;
+/*
+ * @type {!Long}
+ * @inner
+ */ var ONE = _0y2(1);
+/*
+ * Signed one.
+ * @type {!Long}
+ */ Long.ONE = ONE;
+/*
+ * @type {!Long}
+ * @inner
+ */ var _jy2 = _0y2(1, !0);
+/*
+ * Unsigned one.
+ * @type {!Long}
+ */ Long._jy2 = _jy2;
+/*
+ * @type {!Long}
+ * @inner
+ */ var _ky2 = _0y2(-1);
+/*
+ * Signed negative one.
+ * @type {!Long}
+ */ Long._ky2 = _ky2;
+/*
+ * @type {!Long}
+ * @inner
+ */ var MAX_VALUE = _2y2(0xffffffff | 0, 0x7fffffff | 0, !1);
+/*
+ * Maximum signed value.
+ * @type {!Long}
+ */ Long.MAX_VALUE = MAX_VALUE;
+/*
+ * @type {!Long}
+ * @inner
+ */ var _6y2 = _2y2(0xffffffff | 0, 0xffffffff | 0, !0);
+/*
+ * Maximum unsigned value.
+ * @type {!Long}
+ */ Long._6y2 = _6y2;
+/*
+ * @type {!Long}
+ * @inner
+ */ var MIN_VALUE = _2y2(0, 0x80000000 | 0, !1);
+/*
+ * Minimum signed value.
+ * @type {!Long}
+ */ Long.MIN_VALUE = MIN_VALUE;
+/*
+ * @alias Long.prototype
+ * @inner
+ */ var _ly2 = Long.prototype;
+/*
+ * Converts the Long to a 32 bit integer, assuming it is a 32 bit integer.
+ * @returns {number}
+ */ _ly2._my2 = function _my2() {
     return this._Xx2 ? this._eL1 >>> 0 : this._eL1;
 };
- _ly2._Ic1 = function _Ic1() {
+/*
+ * Converts the Long to a the nearest floating-point representation of this value (double, 53 bit mantissa).
+ * @returns {number}
+ */ _ly2._Ic1 = function _Ic1() {
     if (this._Xx2) return (this._xL1 >>> 0) * _9y2 + (this._eL1 >>> 0);
     return this._xL1 * _9y2 + (this._eL1 >>> 0);
 };
- _ly2.toString = function toString(_cy2) {
+/*
+ * Converts the Long to a string written in the specified radix.
+ * @param {number=} radix Radix (2-36), defaults to 10
+ * @returns {string}
+ * @override
+ * @throws {RangeError} If `radix` is out of range
+ */ _ly2.toString = function toString(_cy2) {
     _cy2 = _cy2 || 10;
     if (_cy2 < 2 || 36 < _cy2) throw _dy2("radix");
     if (this._ny2()) return "0";
@@ -63916,70 +64204,177 @@ Object.defineProperty(Long.prototype, "__isLong__", { value: !0 });
         }
     }
 };
- _ly2._wy2 = function _wy2() {
+/*
+ * Gets the high 32 bits as a signed integer.
+ * @returns {number} Signed high bits
+ */ _ly2._wy2 = function _wy2() {
     return this._xL1;
 };
- _ly2._xy2 = function _xy2() {
+/*
+ * Gets the high 32 bits as an unsigned integer.
+ * @returns {number} Unsigned high bits
+ */ _ly2._xy2 = function _xy2() {
     return this._xL1 >>> 0;
 };
- _ly2._yy2 = function _yy2() {
+/*
+ * Gets the low 32 bits as a signed integer.
+ * @returns {number} Signed low bits
+ */ _ly2._yy2 = function _yy2() {
     return this._eL1;
 };
- _ly2._zy2 = function _zy2() {
+/*
+ * Gets the low 32 bits as an unsigned integer.
+ * @returns {number} Unsigned low bits
+ */ _ly2._zy2 = function _zy2() {
     return this._eL1 >>> 0;
 };
- _ly2._Ay2 = function _Ay2() {
+/*
+ * Gets the number of bits needed to represent the absolute value of this Long.
+ * @returns {number}
+ */ _ly2._Ay2 = function _Ay2() {
     if (this._oy2()) return this._py2(MIN_VALUE) ? 64 : this._8y2()._Ay2();
     var _r91 = this._xL1 != 0 ? this._xL1 : this._eL1;
     for (var _r81 = 31; _r81 > 0; _r81--) if ((_r91 & (1 << _r81)) != 0) break;
     return this._xL1 != 0 ? _r81 + 33 : _r81 + 1;
 };
- _ly2._ny2 = function _ny2() {
+/*
+ * Tests if this Long's value equals zero.
+ * @returns {boolean}
+ */ _ly2._ny2 = function _ny2() {
     return this._xL1 === 0 && this._eL1 === 0;
 };
- _ly2._By2 = _ly2._ny2;
- _ly2._oy2 = function _oy2() {
+/*
+ * Tests if this Long's value equals zero. This is an alias of {@link Long#isZero}.
+ * @returns {boolean}
+ */ _ly2._By2 = _ly2._ny2;
+/*
+ * Tests if this Long's value is negative.
+ * @returns {boolean}
+ */ _ly2._oy2 = function _oy2() {
     return !this._Xx2 && this._xL1 < 0;
 };
- _ly2._Cy2 = function _Cy2() {
+/*
+ * Tests if this Long's value is positive.
+ * @returns {boolean}
+ */ _ly2._Cy2 = function _Cy2() {
     return this._Xx2 || this._xL1 >= 0;
 };
- _ly2._Dy2 = function _Dy2() {
+/*
+ * Tests if this Long's value is odd.
+ * @returns {boolean}
+ */ _ly2._Dy2 = function _Dy2() {
     return (this._eL1 & 1) === 1;
 };
- _ly2._Ey2 = function _Ey2() {
+/*
+ * Tests if this Long's value is even.
+ * @returns {boolean}
+ */ _ly2._Ey2 = function _Ey2() {
     return (this._eL1 & 1) === 0;
 };
- _ly2._Fy2 = function _Fy2(_6Z1) {
+/*
+ * Tests if this Long's value equals the specified's.
+ * @param {!Long|number|string} other Other value
+ * @returns {boolean}
+ */ _ly2._Fy2 = function _Fy2(_6Z1) {
     if (!_Yx2(_6Z1)) _6Z1 = _fy2(_6Z1);
     if (this._Xx2 !== _6Z1._Xx2 && this._xL1 >>> 31 === 1 && _6Z1._xL1 >>> 31 === 1) return false;
     return this._xL1 === _6Z1._xL1 && this._eL1 === _6Z1._eL1;
 };
- _ly2._py2 = _ly2._Fy2;
- _ly2._Gy2 = function _Gy2(_6Z1) {
+/*
+ * Tests if this Long's value equals the specified's. This is an alias of {@link Long#equals}.
+ * @function
+ * @param {!Long|number|string} other Other value
+ * @returns {boolean}
+ */ _ly2._py2 = _ly2._Fy2;
+/*
+ * Tests if this Long's value differs from the specified's.
+ * @param {!Long|number|string} other Other value
+ * @returns {boolean}
+ */ _ly2._Gy2 = function _Gy2(_6Z1) {
     return !this._py2(_6Z1);
 };
- _ly2._Hy2 = _ly2._Gy2;
- _ly2._Iy2 = _ly2._Gy2;
- _ly2._Jy2 = function _Jy2(_6Z1) {
+/*
+ * Tests if this Long's value differs from the specified's. This is an alias of {@link Long#notEquals}.
+ * @function
+ * @param {!Long|number|string} other Other value
+ * @returns {boolean}
+ */ _ly2._Hy2 = _ly2._Gy2;
+/*
+ * Tests if this Long's value differs from the specified's. This is an alias of {@link Long#notEquals}.
+ * @function
+ * @param {!Long|number|string} other Other value
+ * @returns {boolean}
+ */ _ly2._Iy2 = _ly2._Gy2;
+/*
+ * Tests if this Long's value is less than the specified's.
+ * @param {!Long|number|string} other Other value
+ * @returns {boolean}
+ */ _ly2._Jy2 = function _Jy2(_6Z1) {
     return this._Ky2(_6Z1) < 0;
 };
- _ly2._Ly2 = _ly2._Jy2;
- _ly2._My2 = function _My2(_6Z1) {
+/*
+ * Tests if this Long's value is less than the specified's. This is an alias of {@link Long#lessThan}.
+ * @function
+ * @param {!Long|number|string} other Other value
+ * @returns {boolean}
+ */ _ly2._Ly2 = _ly2._Jy2;
+/*
+ * Tests if this Long's value is less than or equal the specified's.
+ * @param {!Long|number|string} other Other value
+ * @returns {boolean}
+ */ _ly2._My2 = function _My2(_6Z1) {
     return this._Ky2(_6Z1) <= 0;
 };
- _ly2._Ny2 = _ly2._My2;
- _ly2._Oy2 = _ly2._My2;
- _ly2._Py2 = function _Py2(_6Z1) {
+/*
+ * Tests if this Long's value is less than or equal the specified's. This is an alias of {@link Long#lessThanOrEqual}.
+ * @function
+ * @param {!Long|number|string} other Other value
+ * @returns {boolean}
+ */ _ly2._Ny2 = _ly2._My2;
+/*
+ * Tests if this Long's value is less than or equal the specified's. This is an alias of {@link Long#lessThanOrEqual}.
+ * @function
+ * @param {!Long|number|string} other Other value
+ * @returns {boolean}
+ */ _ly2._Oy2 = _ly2._My2;
+/*
+ * Tests if this Long's value is greater than the specified's.
+ * @param {!Long|number|string} other Other value
+ * @returns {boolean}
+ */ _ly2._Py2 = function _Py2(_6Z1) {
     return this._Ky2(_6Z1) > 0;
 };
- _ly2._Qy2 = _ly2._Py2;
- _ly2._Ry2 = function _Ry2(_6Z1) {
+/*
+ * Tests if this Long's value is greater than the specified's. This is an alias of {@link Long#greaterThan}.
+ * @function
+ * @param {!Long|number|string} other Other value
+ * @returns {boolean}
+ */ _ly2._Qy2 = _ly2._Py2;
+/*
+ * Tests if this Long's value is greater than or equal the specified's.
+ * @param {!Long|number|string} other Other value
+ * @returns {boolean}
+ */ _ly2._Ry2 = function _Ry2(_6Z1) {
     return this._Ky2(_6Z1) >= 0;
 };
- _ly2._Sy2 = _ly2._Ry2;
- _ly2._Ty2 = _ly2._Ry2;
- _ly2._Uy2 = function _Uy2(_6Z1) {
+/*
+ * Tests if this Long's value is greater than or equal the specified's. This is an alias of {@link Long#greaterThanOrEqual}.
+ * @function
+ * @param {!Long|number|string} other Other value
+ * @returns {boolean}
+ */ _ly2._Sy2 = _ly2._Ry2;
+/*
+ * Tests if this Long's value is greater than or equal the specified's. This is an alias of {@link Long#greaterThanOrEqual}.
+ * @function
+ * @param {!Long|number|string} other Other value
+ * @returns {boolean}
+ */ _ly2._Ty2 = _ly2._Ry2;
+/*
+ * Compares this Long's value with the specified's.
+ * @param {!Long|number|string} other Other value
+ * @returns {number} 0 if they are the same, 1 if the this is greater and -1
+ *  if the given one is greater
+ */ _ly2._Uy2 = function _Uy2(_6Z1) {
     if (!_Yx2(_6Z1)) _6Z1 = _fy2(_6Z1);
     if (this._py2(_6Z1)) return 0;
     var _Vy2 = this._oy2(),
@@ -63989,13 +64384,30 @@ Object.defineProperty(Long.prototype, "__isLong__", { value: !0 });
     if (!this._Xx2) return this.sub(_6Z1)._oy2() ? -1 : 1;
     return _6Z1._xL1 >>> 0 > this._xL1 >>> 0 || (_6Z1._xL1 === this._xL1 && _6Z1._eL1 >>> 0 > this._eL1 >>> 0) ? -1 : 1;
 };
- _ly2._Ky2 = _ly2._Uy2;
- _ly2._Xy2 = function _Xy2() {
+/*
+ * Compares this Long's value with the specified's. This is an alias of {@link Long#compare}.
+ * @function
+ * @param {!Long|number|string} other Other value
+ * @returns {number} 0 if they are the same, 1 if the this is greater and -1
+ *  if the given one is greater
+ */ _ly2._Ky2 = _ly2._Uy2;
+/*
+ * Negates this Long's value.
+ * @returns {!Long} Negated Long
+ */ _ly2._Xy2 = function _Xy2() {
     if (!this._Xx2 && this._py2(MIN_VALUE)) return MIN_VALUE;
     return this._Yy2().add(ONE);
 };
- _ly2._8y2 = _ly2._Xy2;
- _ly2.add = function add(_Zy2) {
+/*
+ * Negates this Long's value. This is an alias of {@link Long#negate}.
+ * @function
+ * @returns {!Long} Negated Long
+ */ _ly2._8y2 = _ly2._Xy2;
+/*
+ * Returns the sum of this and the specified Long.
+ * @param {!Long|number|string} addend Addend
+ * @returns {!Long} Sum
+ */ _ly2.add = function add(_Zy2) {
     if (!_Yx2(_Zy2)) _Zy2 = _fy2(_Zy2);
     var __y2 = this._xL1 >>> 16;
     var _0z2 = this._xL1 & 0xffff;
@@ -64022,12 +64434,25 @@ Object.defineProperty(Long.prototype, "__isLong__", { value: !0 });
     _7z2 &= 0xffff;
     return _2y2((_9z2 << 16) | _az2, (_7z2 << 16) | _8z2, this._Xx2);
 };
- _ly2._bz2 = function _bz2(_cz2) {
+/*
+ * Returns the difference of this and the specified Long.
+ * @param {!Long|number|string} subtrahend Subtrahend
+ * @returns {!Long} Difference
+ */ _ly2._bz2 = function _bz2(_cz2) {
     if (!_Yx2(_cz2)) _cz2 = _fy2(_cz2);
     return this.add(_cz2._8y2());
 };
- _ly2.sub = _ly2._bz2;
- _ly2._dz2 = function _dz2(_ez2) {
+/*
+ * Returns the difference of this and the specified Long. This is an alias of {@link Long#subtract}.
+ * @function
+ * @param {!Long|number|string} subtrahend Subtrahend
+ * @returns {!Long} Difference
+ */ _ly2.sub = _ly2._bz2;
+/*
+ * Returns the product of this and the specified Long.
+ * @param {!Long|number|string} multiplier Multiplier
+ * @returns {!Long} Product
+ */ _ly2._dz2 = function _dz2(_ez2) {
     if (this._ny2()) return ZERO;
     if (!_Yx2(_ez2)) _ez2 = _fy2(_ez2);
     if (_Tx2) {
@@ -64076,8 +64501,18 @@ Object.defineProperty(Long.prototype, "__isLong__", { value: !0 });
     _7z2 &= 0xffff;
     return _2y2((_9z2 << 16) | _az2, (_7z2 << 16) | _8z2, this._Xx2);
 };
- _ly2._qB1 = _ly2._dz2;
- _ly2._gz2 = function _gz2(_hz2) {
+/*
+ * Returns the product of this and the specified Long. This is an alias of {@link Long#multiply}.
+ * @function
+ * @param {!Long|number|string} multiplier Multiplier
+ * @returns {!Long} Product
+ */ _ly2._qB1 = _ly2._dz2;
+/*
+ * Returns this Long divided by the specified. The result is signed if this Long is signed or
+ *  unsigned if this Long is unsigned.
+ * @param {!Long|number|string} divisor Divisor
+ * @returns {!Long} Quotient
+ */ _ly2._gz2 = function _gz2(_hz2) {
     if (!_Yx2(_hz2)) _hz2 = _fy2(_hz2);
     if (_hz2._ny2()) throw Error("division by zero");
     if (_Tx2) {
@@ -64134,8 +64569,17 @@ Object.defineProperty(Long.prototype, "__isLong__", { value: !0 });
     }
     return _m61;
 };
- _ly2._2p1 = _ly2._gz2;
- _ly2._sz2 = function _sz2(_hz2) {
+/*
+ * Returns this Long divided by the specified. This is an alias of {@link Long#divide}.
+ * @function
+ * @param {!Long|number|string} divisor Divisor
+ * @returns {!Long} Quotient
+ */ _ly2._2p1 = _ly2._gz2;
+/*
+ * Returns this Long modulo the specified.
+ * @param {!Long|number|string} divisor Divisor
+ * @returns {!Long} Remainder
+ */ _ly2._sz2 = function _sz2(_hz2) {
     if (!_Yx2(_hz2)) _hz2 = _fy2(_hz2);
     if (_Tx2) {
         var _eL1 = (this._Xx2 ? _Tx2._tz2 : _Tx2._uz2)(this._eL1, this._xL1, _hz2._eL1, _hz2._xL1);
@@ -64143,38 +64587,85 @@ Object.defineProperty(Long.prototype, "__isLong__", { value: !0 });
     }
     return this.sub(this._2p1(_hz2)._qB1(_hz2));
 };
- _ly2._rB1 = _ly2._sz2;
- _ly2._sy2 = _ly2._sz2;
- _ly2._Yy2 = function _Yy2() {
+/*
+ * Returns this Long modulo the specified. This is an alias of {@link Long#modulo}.
+ * @function
+ * @param {!Long|number|string} divisor Divisor
+ * @returns {!Long} Remainder
+ */ _ly2._rB1 = _ly2._sz2;
+/*
+ * Returns this Long modulo the specified. This is an alias of {@link Long#modulo}.
+ * @function
+ * @param {!Long|number|string} divisor Divisor
+ * @returns {!Long} Remainder
+ */ _ly2._sy2 = _ly2._sz2;
+/*
+ * Returns the bitwise NOT of this Long.
+ * @returns {!Long}
+ */ _ly2._Yy2 = function _Yy2() {
     return _2y2(~this._eL1, ~this._xL1, this._Xx2);
 };
- _ly2._uB1 = function _uB1(_6Z1) {
+/*
+ * Returns the bitwise AND of this Long and the specified.
+ * @param {!Long|number|string} other Other Long
+ * @returns {!Long}
+ */ _ly2._uB1 = function _uB1(_6Z1) {
     if (!_Yx2(_6Z1)) _6Z1 = _fy2(_6Z1);
     return _2y2(this._eL1 & _6Z1._eL1, this._xL1 & _6Z1._xL1, this._Xx2);
 };
- _ly2._vB1 = function _vB1(_6Z1) {
+/*
+ * Returns the bitwise OR of this Long and the specified.
+ * @param {!Long|number|string} other Other Long
+ * @returns {!Long}
+ */ _ly2._vB1 = function _vB1(_6Z1) {
     if (!_Yx2(_6Z1)) _6Z1 = _fy2(_6Z1);
     return _2y2(this._eL1 | _6Z1._eL1, this._xL1 | _6Z1._xL1, this._Xx2);
 };
- _ly2._wB1 = function _wB1(_6Z1) {
+/*
+ * Returns the bitwise XOR of this Long and the given one.
+ * @param {!Long|number|string} other Other Long
+ * @returns {!Long}
+ */ _ly2._wB1 = function _wB1(_6Z1) {
     if (!_Yx2(_6Z1)) _6Z1 = _fy2(_6Z1);
     return _2y2(this._eL1 ^ _6Z1._eL1, this._xL1 ^ _6Z1._xL1, this._Xx2);
 };
- _ly2._xB1 = function _xB1(_Lw2) {
+/*
+ * Returns this Long with bits shifted to the left by the given amount.
+ * @param {number|!Long} numBits Number of bits
+ * @returns {!Long} Shifted Long
+ */ _ly2._xB1 = function _xB1(_Lw2) {
     if (_Yx2(_Lw2)) _Lw2 = _Lw2._my2();
     if ((_Lw2 &= 63) === 0) return this;
     else if (_Lw2 < 32) return _2y2(this._eL1 << _Lw2, (this._xL1 << _Lw2) | (this._eL1 >>> (32 - _Lw2)), this._Xx2);
     else return _2y2(0, this._eL1 << (_Lw2 - 32), this._Xx2);
 };
- _ly2._nz2 = _ly2._xB1;
- _ly2._yB1 = function _yB1(_Lw2) {
+/*
+ * Returns this Long with bits shifted to the left by the given amount. This is an alias of {@link Long#shiftLeft}.
+ * @function
+ * @param {number|!Long} numBits Number of bits
+ * @returns {!Long} Shifted Long
+ */ _ly2._nz2 = _ly2._xB1;
+/*
+ * Returns this Long with bits arithmetically shifted to the right by the given amount.
+ * @param {number|!Long} numBits Number of bits
+ * @returns {!Long} Shifted Long
+ */ _ly2._yB1 = function _yB1(_Lw2) {
     if (_Yx2(_Lw2)) _Lw2 = _Lw2._my2();
     if ((_Lw2 &= 63) === 0) return this;
     else if (_Lw2 < 32) return _2y2((this._eL1 >>> _Lw2) | (this._xL1 << (32 - _Lw2)), this._xL1 >> _Lw2, this._Xx2);
     else return _2y2(this._xL1 >> (_Lw2 - 32), this._xL1 >= 0 ? 0 : -1, this._Xx2);
 };
- _ly2._mz2 = _ly2._yB1;
- _ly2._vz2 = function _vz2(_Lw2) {
+/*
+ * Returns this Long with bits arithmetically shifted to the right by the given amount. This is an alias of {@link Long#shiftRight}.
+ * @function
+ * @param {number|!Long} numBits Number of bits
+ * @returns {!Long} Shifted Long
+ */ _ly2._mz2 = _ly2._yB1;
+/*
+ * Returns this Long with bits logically shifted to the right by the given amount.
+ * @param {number|!Long} numBits Number of bits
+ * @returns {!Long} Shifted Long
+ */ _ly2._vz2 = function _vz2(_Lw2) {
     if (_Yx2(_Lw2)) _Lw2 = _Lw2._my2();
     _Lw2 &= 63;
     if (_Lw2 === 0) return this;
@@ -64187,42 +64678,84 @@ Object.defineProperty(Long.prototype, "__isLong__", { value: !0 });
         else return _2y2(_xL1 >>> (_Lw2 - 32), 0, this._Xx2);
     }
 };
- _ly2._pz2 = _ly2._vz2;
- _ly2._wz2 = _ly2._vz2;
- _ly2._xz2 = function _xz2() {
+/*
+ * Returns this Long with bits logically shifted to the right by the given amount. This is an alias of {@link Long#shiftRightUnsigned}.
+ * @function
+ * @param {number|!Long} numBits Number of bits
+ * @returns {!Long} Shifted Long
+ */ _ly2._pz2 = _ly2._vz2;
+/*
+ * Returns this Long with bits logically shifted to the right by the given amount. This is an alias of {@link Long#shiftRightUnsigned}.
+ * @function
+ * @param {number|!Long} numBits Number of bits
+ * @returns {!Long} Shifted Long
+ */ _ly2._wz2 = _ly2._vz2;
+/*
+ * Converts this Long to signed.
+ * @returns {!Long} Signed long
+ */ _ly2._xz2 = function _xz2() {
     if (!this._Xx2) return this;
     return _2y2(this._eL1, this._xL1, false);
 };
- _ly2._oz2 = function _oz2() {
+/*
+ * Converts this Long to unsigned.
+ * @returns {!Long} Unsigned long
+ */ _ly2._oz2 = function _oz2() {
     if (this._Xx2) return this;
     return _2y2(this._eL1, this._xL1, true);
 };
- _ly2._yz2 = function _yz2(_Oy2) {
+/*
+ * Converts this Long to its byte representation.
+ * @param {boolean=} le Whether little or big endian, defaults to big endian
+ * @returns {!Array.<number>} Byte representation
+ */ _ly2._yz2 = function _yz2(_Oy2) {
     return _Oy2 ? this._zz2() : this._Az2();
 };
- _ly2._zz2 = function _zz2() {
+/*
+ * Converts this Long to its little endian byte representation.
+ * @returns {!Array.<number>} Little endian byte representation
+ */ _ly2._zz2 = function _zz2() {
     var _dL1 = this._xL1,
         _QT1 = this._eL1;
     return [_QT1 & 0xff, (_QT1 >>> 8) & 0xff, (_QT1 >>> 16) & 0xff, _QT1 >>> 24, _dL1 & 0xff, (_dL1 >>> 8) & 0xff, (_dL1 >>> 16) & 0xff, _dL1 >>> 24];
 };
- _ly2._Az2 = function _Az2() {
+/*
+ * Converts this Long to its big endian byte representation.
+ * @returns {!Array.<number>} Big endian byte representation
+ */ _ly2._Az2 = function _Az2() {
     var _dL1 = this._xL1,
         _QT1 = this._eL1;
     return [_dL1 >>> 24, (_dL1 >>> 16) & 0xff, (_dL1 >>> 8) & 0xff, _dL1 & 0xff, _QT1 >>> 24, (_QT1 >>> 16) & 0xff, (_QT1 >>> 8) & 0xff, _QT1 & 0xff];
 };
- Long._Bz2 = function _Bz2(_Cz2, _Xx2, _Oy2) {
+/*
+ * Creates a Long from its byte representation.
+ * @param {!Array.<number>} bytes Byte representation
+ * @param {boolean=} unsigned Whether unsigned or not, defaults to signed
+ * @param {boolean=} le Whether little or big endian, defaults to big endian
+ * @returns {Long} The corresponding Long value
+ */ Long._Bz2 = function _Bz2(_Cz2, _Xx2, _Oy2) {
     return _Oy2 ? Long._Dz2(_Cz2, _Xx2) : Long._Ez2(_Cz2, _Xx2);
 };
- Long._Dz2 = function _Dz2(_Cz2, _Xx2) {
+/*
+ * Creates a Long from its little endian byte representation.
+ * @param {!Array.<number>} bytes Little endian byte representation
+ * @param {boolean=} unsigned Whether unsigned or not, defaults to signed
+ * @returns {Long} The corresponding Long value
+ */ Long._Dz2 = function _Dz2(_Cz2, _Xx2) {
     return new Long(_Cz2[0] | (_Cz2[1] << 8) | (_Cz2[2] << 16) | (_Cz2[3] << 24), _Cz2[4] | (_Cz2[5] << 8) | (_Cz2[6] << 16) | (_Cz2[7] << 24), _Xx2);
 };
- Long._Ez2 = function _Ez2(_Cz2, _Xx2) {
+/*
+ * Creates a Long from its big endian byte representation.
+ * @param {!Array.<number>} bytes Big endian byte representation
+ * @param {boolean=} unsigned Whether unsigned or not, defaults to signed
+ * @returns {Long} The corresponding Long value
+ */ Long._Ez2 = function _Ez2(_Cz2, _Xx2) {
     return new Long((_Cz2[4] << 24) | (_Cz2[5] << 16) | (_Cz2[6] << 8) | _Cz2[7], (_Cz2[0] << 24) | (_Cz2[1] << 16) | (_Cz2[2] << 8) | _Cz2[3], _Xx2);
 };
 function _Fz2(color) {
     return (((color._b21 * 255) & 0xff) << 0) | (((color._k41 * 255) & 0xff) << 8) | (((color._e21 * 255) & 0xff) << 16);
 }
- function _Gz2(vertices, vertexCount, color) {
+/*@this {yyPhysicsDebugDraw} */ function _Gz2(vertices, vertexCount, color) {
     _aL(_Fz2(color));
     var scale = 1.0 / this._Hz2._vF1;
     for (var _W11 = 0; _W11 < vertexCount; ++_W11) {
@@ -64231,7 +64764,7 @@ function _Fz2(color) {
         _jX(_Iz2.x * scale, _Iz2.y * scale, _Jz2.x * scale, _Jz2.y * scale);
     }
 }
- function _Kz2(vertices, vertexCount, color) {
+/*@this {yyPhysicsDebugDraw} */ function _Kz2(vertices, vertexCount, color) {
     _aL(_Fz2(color));
     var scale = 1.0 / this._Hz2._vF1;
     var _Iz2 = vertices[0];
@@ -64241,22 +64774,22 @@ function _Fz2(color) {
         _OL(_Iz2.x * scale, _Iz2.y * scale, _Jz2.x * scale, _Jz2.y * scale, _Lz2.x * scale, _Lz2.y * scale, false);
     }
 }
- function _Mz2(_1U1, _2U1, color) {
+/*@this {yyPhysicsDebugDraw} */ function _Mz2(_1U1, _2U1, color) {
     _aL(_Fz2(color));
     var scale = 1.0 / this._Hz2._vF1;
     _xu1((_1U1.x - _2U1) * scale, (_1U1.y - _2U1) * scale, (_1U1.x + _2U1) * scale, (_1U1.y + _2U1) * scale, true);
 }
- function _Nz2(_1U1, _2U1, _Ge1, color) {
+/*@this {yyPhysicsDebugDraw} */ function _Nz2(_1U1, _2U1, _Ge1, color) {
     _aL(_Fz2(color));
     var scale = 1.0 / this._Hz2._vF1;
     _xu1((_1U1.x - _2U1) * scale, (_1U1.y - _2U1) * scale, (_1U1.x + _2U1) * scale, (_1U1.y + _2U1) * scale, false);
 }
- function _Oz2(_Fe1, _5U1, color) {
+/*@this {yyPhysicsDebugDraw} */ function _Oz2(_Fe1, _5U1, color) {
     _aL(_Fz2(color));
     var scale = 1.0 / this._Hz2._vF1;
     _jX(_Fe1.x * scale, _Fe1.y * scale, _5U1.x * scale, _5U1.y * scale);
 }
- function _Pz2(_3T1) {
+/*@this {yyPhysicsDebugDraw} */ function _Pz2(_3T1) {
     var _Qz2 = 0.4;
     var scale = 1.0 / this._Hz2._vF1;
     var _Fe1 = _3T1._ot1,
@@ -64270,14 +64803,14 @@ function _Fz2(color) {
     _aL(_Uz2);
     _jX(_Fe1.x * scale, _Fe1.y * scale, _5U1.x * scale, _5U1.y * scale);
 }
- function _Vz2(_8U1, _2U1, _9U1, _d31) {
+/*@this {yyPhysicsDebugDraw} */ function _Vz2(_8U1, _2U1, _9U1, _d31) {
     for (var _W11 = 0; _W11 < _d31; _W11++) {
         var scale = 1.0 / this._Hz2._vF1;
         _aL(((_9U1[_W11]._b21 & 0xff) << 0) | ((_9U1[_W11]._k41 & 0xff) << 8) | ((_9U1[_W11]._e21 & 0xff) << 16));
         _xu1((_8U1[_W11].x - _2U1) * scale, (_8U1[_W11].y - _2U1) * scale, (_8U1[_W11].x + _2U1) * scale, (_8U1[_W11].y + _2U1) * scale, true);
     }
 }
- function __E1() {
+/*@constructor */ function __E1() {
     this._532 = 0;
     this._632 = 0;
     this._Wz2 = false;
@@ -64378,7 +64911,7 @@ var _6A2 = 0,
     _sA2 = 22,
     _tA2 = 23,
     _uA2 = 24;
- function _vA2(_wA2) {
+/*@constructor */ function _vA2(_wA2) {
     this._xA2 = _wA2;
 }
 _vA2.prototype._Sg2 = function (_yA2) {
@@ -64388,7 +64921,7 @@ _vA2.prototype._Sg2 = function (_yA2) {
         this._xA2._Sg2(_yA2);
     }
 };
- function _CA2(_DA2, _EA2, _DF1, _EF1) {
+/*@constructor */ function _CA2(_DA2, _EA2, _DF1, _EF1) {
     this._FA2 = _DA2;
     this._GA2 = _EA2;
     this._HA2 = new _Rz2._Sz2(_DF1, _EF1);
@@ -64766,7 +65299,7 @@ function _xB2() {
         _Rz2._9E2 = _4r1["ParticleSystem"];
     }
 }
- function _aE2(_bE2) {
+/*@constructor */ function _aE2(_bE2) {
     var _dd2 = new _Rz2._cC2();
     _bE2._cd2(_dd2);
     this._cE2 = _bE2._H32();
@@ -64776,12 +65309,12 @@ function _xB2() {
     this._eE2[0] = _bE2._bd2();
     this._fE2[0] = _dd2;
 }
- function _gE2(_hE2, _iE2, _jE2) {
+/*@constructor */ function _gE2(_hE2, _iE2, _jE2) {
     this._kE2 = _hE2;
     this._L42 = _iE2;
     this._M42 = _jE2;
 }
- function _lE2(_mE2, _nE2) {
+/*@constructor */ function _lE2(_mE2, _nE2) {
     _xB2();
     if (_Rz2 === null) {
         _Rz2 = window["b2"];
@@ -72082,7 +72615,7 @@ var _HT2 = 0,
     _IT2 = 1,
     _JT2 = 2,
     _KT2 = 3;
- function _LT2(_l81, _Ub1) {
+/*@constructor */ function _LT2(_l81, _Ub1) {
     this.type = _l81;
     this.id = _Ub1;
     this._Gx2 = null;
@@ -72176,7 +72709,7 @@ var _6U2 = 0,
 var _aU2 = 0,
     _bU2 = 1;
 var _cU2 = { _4S1: 0, _5S1: 0, version: 1 };
- function _dU2(_l81, _Ub1) {
+/*@constructor */ function _dU2(_l81, _Ub1) {
     this.type = _l81;
     this.id = _Ub1;
 }
@@ -72461,7 +72994,7 @@ _dU2.prototype._rU2 = function (_sU2, _OT2, _PT2, _QT2) {
     return _PT2;
 };
 var _9V2 = 1.0 / 20.0;
- function _aV2() {
+/*@constructor */ function _aV2() {
     this._bV2 = 0;
     this._cV2 = 0;
     this._K11 = 0;
@@ -72566,7 +73099,7 @@ _aV2.prototype._eV2 = function (_OT2, _PT2, _QT2) {
     }
     return _PT2;
 };
- (function () {
+/*@license zlib.js 2012 - imaya [ https://github.com/imaya/zlib.js ] The MIT License */ (function () {
     "use strict";
     var _W11 = void 0,
         _Z9 = !0,
@@ -73311,8 +73844,23 @@ _aV2.prototype._eV2 = function (_OT2, _PT2, _QT2) {
     else for (_4W2 in ((_3W2 = []), (_5W2 = 0), _1W2)) _3W2[_5W2++] = _4W2;
     _5W2 = 0;
     for (_6W2 = _3W2.length; _5W2 < _6W2; ++_5W2) (_4W2 = _3W2[_5W2]), _sV2("Zlib.Deflate.CompressionType." + _4W2, _1W2[_4W2]);
-}.call(this));  
-
+}.call(this));  //@ sourceMappingURL=deflate.min.js.map
+/** fingerprintJS 0.5.4 - Fast browser fingerprint library
+ * https://github.com/Valve/fingerprintjs
+ * Copyright (c) 2013 Valentin Vasilyev (valentin.vasilyev@outlook.com)
+ * Licensed under the MIT (http://www.opensource.org/licenses/mit-license.php) license.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 (function (name, context, _7W2) {
     if (typeof module !== "undefined" && module.__l2) {
         module.__l2 = _7W2();
@@ -73399,7 +73947,18 @@ _aV2.prototype._eV2 = function (_OT2, _PT2, _QT2) {
                 return this._oW2(_6L2.join("###"), 31);
             }
         },
-         _oW2: function (key, _g72) {
+        /*
+         * JS Implementation of MurmurHash3 (r136) (as of May 20, 2011)
+         *
+         * @author <a href="mailto:gary.court@gmail.com">Gary Court</a>
+         * @see http://github.com/garycourt/murmurhash-js
+         * @author <a href="mailto:aappleby@gmail.com">Austin Appleby</a>
+         * @see http://sites.google.com/site/murmurhash/
+         *
+         * @param {string} key ASCII only
+         * @param {number} seed Positive integer only
+         * @return {number} 32-bit positive integer hash
+         */ _oW2: function (key, _g72) {
             var _pW2, _Cz2, _qr1, _qW2, _BS1, _CS1, _rW2, _X9;
             _pW2 = key.length & 3;
             _Cz2 = key.length - _pW2;
@@ -73540,7 +74099,7 @@ _aV2.prototype._eV2 = function (_OT2, _PT2, _QT2) {
     };
     return Fingerprint;
 });
- (function () {
+/*@license zlib.js 2012 - imaya [ https://github.com/imaya/zlib.js ] The MIT License */ (function () {
     "use strict";
     function _Z11(_e21) {
         throw _e21;
@@ -73918,15 +74477,15 @@ _aV2.prototype._eV2 = function (_OT2, _PT2, _QT2) {
     _xl1 = 0;
     for ($ = _vl1.length; _xl1 < $; ++_xl1) (_wl1 = _vl1[_xl1]), _Wo1("Zlib.Inflate.BufferType." + _wl1, _5W2[_wl1]);
 }.call(this));
-
- function _HW2() {
+//@ sourceMappingURL=inflate.min.js.map
+/*@constructor */ function _HW2() {
     this._IW2 = 0;
     this._JW2 = null;
     this._KW2 = 0;
     this._LW2 = null;
     this._MW2 = new _jc1();
 }
- function _NW2() {
+/*@constructor */ function _NW2() {
     this._k91 = 0;
     this._OW2 = new _Fk1();
     this._PW2 = new _Fk1();
@@ -75280,7 +75839,7 @@ function _F_2() {
         "AAAAEAAEAAEAZAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
         "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
         "AAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAABAAMAAQA" +
-        "AAAwABAAgAAAABAAEAAEAAABB
+        "AAAwABAAgAAAABAAEAAEAAABB//8AAABB////wAABAAAA" +
         "AAABAAAAAAAAAAAAAAAAMQAAAQAAAAAAAAAAAABfDzz1A" +
         "AAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAEAAg" +
         "AAAAAAAAABAAAAAQAAAAEAAAAAAAAAAAAAAAAAAAAAAAA" +
@@ -76890,15 +77449,15 @@ function _wC1(_8r1, _Lc1, _Kc3, _GF1) {
     }
     return _GF1;
 }
- function _Nc3() {
-     (this.init = function () {
+/*@constructor */ function _Nc3() {
+    /*@this {BrowserDetect} */ (this.init = function () {
         this.browser = this.searchString(this.dataBrowser) || "An unknown browser";
         this._Fv1 = this._Oc3();
         this.version = this.searchVersion(navigator.userAgent) || this.searchVersion(navigator.appVersion) || "an unknown version";
         this._Pc3 = this.searchString(this.dataOS) || "an unknown OS";
         this._Qc3 = this._Rc3();
     }),
-         (this._Oc3 = function () {
+        /*@this {BrowserDetect} */ (this._Oc3 = function () {
             var _Sc3 = navigator.userAgent.toString().toLowerCase();
             if (_Sc3.indexOf("trident/5") > -1) {
                 return 9.0;
@@ -76909,7 +77468,7 @@ function _wC1(_8r1, _Lc1, _Kc3, _GF1) {
             }
             return -1;
         }),
-         (this._Rc3 = function () {
+        /*@this {BrowserDetect} */ (this._Rc3 = function () {
             if (navigator.appVersion.indexOf("CPU OS 5_") != -1) {
                 return 5.0;
             } else if (navigator.appVersion.indexOf("CPU OS 4_") != -1) {
@@ -76926,7 +77485,7 @@ function _wC1(_8r1, _Lc1, _Kc3, _GF1) {
                 return _B13;
             }
         }),
-         (this.searchString = function (data) {
+        /*@this {BrowserDetect} */ (this.searchString = function (data) {
             for (var _X9 = 0; _X9 < data.length; _X9++) {
                 var _Tc3 = data[_X9]._ul;
                 var _Uc3 = data[_X9].prop;
@@ -76940,7 +77499,7 @@ function _wC1(_8r1, _Lc1, _Kc3, _GF1) {
                 }
             }
         }),
-         (this.searchVersion = function (_Tc3) {
+        /*@this {BrowserDetect} */ (this.searchVersion = function (_Tc3) {
             var index = _Tc3.indexOf(this.versionSearchString);
             if (index == -1) return;
             return parseFloat(_Tc3.substring(index + this.versionSearchString.length + 1));
@@ -77132,19 +77691,19 @@ function _pd3(_od3) {
     }
     return "Unknown Error";
 }
- function _qd3(_j01) {
+/*@this {XMLHttpRequest} */ function _qd3(_j01) {
     debug("ImageLoaded: " + this.src);
     _DJ1++;
 }
- function _rd3(_j01) {
+/*@this {XMLHttpRequest} */ function _rd3(_j01) {
     debug("ImageError: " + this.src);
     _DJ1++;
 }
- function _sd3(_j01) {
+/*@this {XMLHttpRequest} */ function _sd3(_j01) {
     _Yc3++;
     debug("ExtensionLoaded: ");
 }
- function _td3(_j01) {
+/*@this {XMLHttpRequest} */ function _td3(_j01) {
     _Yc3++;
     debug("ExtensionError: ");
 }
@@ -77156,7 +77715,7 @@ function ClearEventListeners(_ud3) {
     _ud3.removeEventListener("stalled", _zd3, false);
     _ud3.removeEventListener("stall", _zd3, false);
 }
- function _vd3(_j01) {
+/*@this {XMLHttpRequest} */ function _vd3(_j01) {
     this.completed = true;
     if (__c3[this.URL] !== null) {
         __c3[this.URL] = null;
@@ -77165,7 +77724,7 @@ function ClearEventListeners(_ud3) {
     ClearEventListeners(this);
     debug("SoundLoaded: " + this.URL);
 }
- function _wd3(_j01) {
+/*@this {XMLHttpRequest} */ function _wd3(_j01) {
     debug("SoundError: " + this.URL + "   NetworkError: " + _nd3(this.error["code"]));
     this.completed = false;
     if (__c3[this.URL] !== null) {
@@ -77174,10 +77733,10 @@ function ClearEventListeners(_ud3) {
     }
     ClearEventListeners(this);
 }
- function _xd3(_j01) {
+/*@this {XMLHttpRequest} */ function _xd3(_j01) {
     this._Ad3 = true;
 }
- function _yd3(_j01) {
+/*@this {XMLHttpRequest} */ function _yd3(_j01) {
     debug("SoundSuspended: " + this.URL);
     this.completed = true;
     if (__c3[this.URL] !== null) {
@@ -77635,7 +78194,9 @@ var _3f3 = 12;
 var _4f3 = 13;
 var _5f3 = 14;
 var _6f3 = 15;
- function _Fk1(_ng1) {
+/*@constructor
+ * @param {Object=} _matrix Some value (optional).
+ */ function _Fk1(_ng1) {
     this._Z11 = new Float32Array(16);
     if (arguments.length > 0) {
         var _7f3 = _ng1._Z11 || _ng1;
@@ -77881,7 +78442,7 @@ _Fk1.prototype._eY2 = function (_Ff3) {
     }
     return _Gf3;
 };
- function _ce1() {
+/*@constructor */ function _ce1() {
     this.x = 0;
     this.y = 0;
     this._Z9 = 0;
@@ -77895,7 +78456,7 @@ _Fk1.prototype._eY2 = function (_Ff3) {
     this._fk = 0;
     this._JK1 = _qe3;
 }
- function _qe3(_YK1) {
+/*@constructor */ function _qe3(_YK1) {
     this.x = _YK1.x;
     this.y = _YK1.y;
     this._Z9 = _YK1._Z9;
@@ -77908,7 +78469,7 @@ _Fk1.prototype._eY2 = function (_Ff3) {
     this._ek = _YK1._ek;
     this._fk = _YK1._fk;
 }
-        function _Hf3(_L31) {
+/*@constructor */ /*@constructor */ /*@constructor */ /*@constructor */ /*@constructor */ /*@constructor */ /*@constructor */ /*@constructor */ function _Hf3(_L31) {
     _w61("splash_set_color()");
 }
 var _If3 = _Hf3;
@@ -77951,7 +78512,7 @@ function _Tf3() {
     _w61("draw_get_alpha_test_ref_value()");
     return 0;
 }
- function _Zk1(_Uf3, _Vf3, _Wf3) {
+/*@constructor */ function _Zk1(_Uf3, _Vf3, _Wf3) {
     if (arguments.length > 0) {
         if (arguments.length == 3) {
             this._vl1 = _Uf3;
@@ -78123,7 +78684,7 @@ var _sg3 = 0,
     _Fg3 = 13,
     _Gg3 = 14,
     _Hg3 = 15;
- function _Kl1() {
+/*@constructor */ function _Kl1() {
     this._Ua1();
 }
 _Kl1.prototype._Ua1 = function () {
@@ -78623,7 +79184,7 @@ _Kl1.prototype._O31 = function (x, y, _L61, _v31) {
     }
     __l1(_0m1, _8m1);
 };
- function _VE1(_eh3) {
+/*@constructor */ function _VE1(_eh3) {
     var _tc1 = arguments;
     var _uc1 = arguments.length;
     this._xc1 = [];
@@ -78722,7 +79283,7 @@ function _cp1(_Lc1) {
     }
     return undefined;
 }
- function _th3() {
+/*@constructor */ function _th3() {
     this._uh3 = "";
     this._vh3 = -1;
     this._Ha1 = 0;
@@ -78730,7 +79291,7 @@ function _cp1(_Lc1) {
     this._wh3 = _hh3;
     this._Ia1 = false;
 }
- function _ld3() {
+/*@constructor */ function _ld3() {
     this._xc1 = new _VE1(5);
 }
 _ld3.prototype._jC1 = function () {
@@ -78818,7 +79379,7 @@ _ld3.prototype._yh3 = function () {
     _Tm(map);
     _rn._mI1 = -1;
 };
- function _ae1() {
+/*@constructor */ function _ae1() {
     this.__type = "[Background]";
     this._d2 = "";
     this._n2 = false;
@@ -78855,7 +79416,7 @@ function _Ih3(_Jh3) {
     }
     return _UK1;
 }
- function _Lh3(_Jh3) {
+/*@constructor */ function _Lh3(_Jh3) {
     this._Ua1();
     if (_Jh3._4a != undefined) this._4a = _Jh3._4a;
     if (_Jh3._1x1 != undefined) this._1x1 = _Jh3._1x1;
@@ -78895,7 +79456,7 @@ _Lh3.prototype._Ua1 = function () {
     this.alpha = 1.0;
     this._7x1 = 0xffffff;
 };
- function _gd3() {
+/*@constructor */ function _gd3() {
     this.images = [];
     this._Vd1 = [];
 }
@@ -79039,7 +79600,7 @@ function _Tr2(_781) {
     }
     return 1024;
 }
- function _vi3(_781, _l81, _wi3, _xi3) {
+/*@constructor */ function _vi3(_781, _l81, _wi3, _xi3) {
     _wi3 = _Tr2(_wi3 & 0x1ff);
     this._yi3 = _781 + _wi3;
     this._wh3 = _l81;
@@ -80057,7 +80618,7 @@ function _Lk3(_IM1) {
     }
     return 0;
 }
- function _5d3() {
+/*@constructor */ function _5d3() {
     this.__type = "[BuiltIn]";
     this._Ay1 = 0;
     this._ye3 = 0;
@@ -80223,7 +80784,7 @@ _5d3.prototype._Pb1 = function (_3m3) {
         this[_J41] = _ot1;
     }
 };
- function _4m3() {
+/*@constructor */ function _4m3() {
     this.__type = "[Font]";
     this._5m3 = false;
     this._6m3 = false;
@@ -80707,7 +81268,7 @@ _4m3.prototype._Lm3 = function (_a11, _b11, _qm3, _Dm1, _Em1, _e11, _jq1, _kq1, 
         __l1(_0m1, _Mm3);
     }
 };
- function _id3() {
+/*@constructor */ function _id3() {
     this._P9 = [];
     this.length = 0;
     this._xq1 = null;
@@ -81149,7 +81710,7 @@ function _me3(_1o3) {
         _OK1(_be1);
     }
 }
- function _2o3() {
+/*@constructor */ function _2o3() {
     this._UK1 = null;
     this._3o3 = 0;
 }
@@ -84035,39 +84596,39 @@ _6d3.prototype._Ua1 = function () {
     _rn._OS = "";
     _rn._GS = "";
 };
- function _wt3() {
+/*@this {yyIOManager} */ function _wt3() {
     return this._gt3;
 }
- function _xt3(_1u3) {
+/*@this {yyIOManager} */ function _xt3(_1u3) {
     this._gt3 = _1u3;
 }
- function _yt3() {
+/*@this {yyIOManager} */ function _yt3() {
     return this._jt3;
 }
- function _zt3() {
+/*@this {yyIOManager} */ function _zt3() {
     return this._it3;
 }
- function _At3(_Hc1) {
+/*@this {yyIOManager} */ function _At3(_Hc1) {
     if (_Hc1 < 0 || _Hc1 > 255) return false;
     this._jt3 = _Hc1;
 }
- function _Bt3(_Hc1) {
+/*@this {yyIOManager} */ function _Bt3(_Hc1) {
     if (_Hc1 < 0 || _Hc1 > 255) return false;
     this._it3 = _Hc1;
 }
- function _Ct3(_Hc1) {
+/*@this {yyIOManager} */ function _Ct3(_Hc1) {
     if (_Hc1 < 0 || _Hc1 > 255) return false;
     return this._xw1[_Hc1];
 }
- function _Dt3(_Hc1) {
+/*@this {yyIOManager} */ function _Dt3(_Hc1) {
     if (_Hc1 < 0 || _Hc1 > 255) return false;
     return this._ww1[_Hc1];
 }
- function _Et3(_Hc1) {
+/*@this {yyIOManager} */ function _Et3(_Hc1) {
     if (_Hc1 < 0 || _Hc1 > 255) return false;
     return this._yw1[_Hc1];
 }
- function _Ft3(_Hc1) {
+/*@this {yyIOManager} */ function _Ft3(_Hc1) {
     if (_Hc1 < 0 || _Hc1 > 255) return;
     this._xw1[_Hc1] = 0;
     this._ww1[_Hc1] = 0;
@@ -84090,41 +84651,41 @@ function _Zt3() {
         _vs3[_X9] = 0;
     }
 }
- function _Gt3() {
+/*@this {yyIOManager} */ function _Gt3() {
     return this._kt3;
 }
- function _Ht3() {
+/*@this {yyIOManager} */ function _Ht3() {
     return this._lt3;
 }
- function _It3(_vw1) {
+/*@this {yyIOManager} */ function _It3(_vw1) {
     if (_vw1 < 1 || _vw1 > 3) return;
     this._kt3 = _vw1;
 }
- function _Jt3(_vw1) {
+/*@this {yyIOManager} */ function _Jt3(_vw1) {
     if (_vw1 < 1 || _vw1 > 3) return;
     this._lt3 = _vw1;
 }
- function _Kt3(_vw1) {
+/*@this {yyIOManager} */ function _Kt3(_vw1) {
     _vw1--;
     if (_vw1 >= 0 && _vw1 < _is3) {
         return this._D91[_vw1];
     }
     return false;
 }
- function _Lt3(_vw1) {
+/*@this {yyIOManager} */ function _Lt3(_vw1) {
     _vw1--;
     if (_vw1 >= 0 && _vw1 < _is3) {
         return this._y91[_vw1];
     }
 }
- function _Mt3(_vw1) {
+/*@this {yyIOManager} */ function _Mt3(_vw1) {
     _vw1--;
     if (_vw1 >= 0 && _vw1 < _is3) {
         return this._C91[_vw1];
     }
     return false;
 }
- function _Nt3(_vw1) {
+/*@this {yyIOManager} */ function _Nt3(_vw1) {
     _vw1--;
     if (_vw1 >= 0 && _vw1 < _is3) {
         this._D91[_vw1] = false;
@@ -84132,7 +84693,7 @@ function _Zt3() {
         this._C91[_vw1] = false;
     }
 }
- function _Ot3() {
+/*@this {yyIOManager} */ function _Ot3() {
     this._kt3 = 0;
     this._lt3 = 0;
     for (var _X9 = 0; _X9 <= _is3; _X9++) {
@@ -84156,7 +84717,7 @@ function __t3() {
     _yb1[0].y = 0;
     _ms3 = -1;
 }
- function _tt3() {
+/*@this {yyIOManager} */ function _tt3() {
     for (var _nb1 = 0; _nb1 < _kb1.length; _nb1++) {
         var _ob1 = _kb1[_nb1];
         if (_ob1._D91) {
@@ -84242,7 +84803,7 @@ function __t3() {
     _rn._El3 = _ps3 + 1;
     this._Vt3();
 }
- function _Vt3() {
+/*@this {yyIOManager} */ function _Vt3() {
     var _2u3 = 0;
     var _r81 = 0;
     var _Z9 = _ys1;
@@ -84329,7 +84890,7 @@ function _Tt3(_bu3) {
         }
     }
 }
- function _Qt3() {
+/*@this {yyIOManager} */ function _Qt3() {
     var _cu3 = 0;
     for (var _X9 = 2; _X9 < _hs3; _X9++) {
         if (this._xw1[_X9]) {
@@ -84339,7 +84900,7 @@ function _Tt3(_bu3) {
     }
     _Pt3(_cu3);
 }
- function _St3() {
+/*@this {yyIOManager} */ function _St3() {
     var _du3 = 0;
     for (var _X9 = 2; _X9 < _hs3; _X9++) {
         if (this._ww1[_X9]) {
@@ -84349,7 +84910,7 @@ function _Tt3(_bu3) {
     }
     _9u3(_du3);
 }
- function _Ut3() {
+/*@this {yyIOManager} */ function _Ut3() {
     var _eu3 = 0;
     for (var _X9 = 2; _X9 < _hs3; _X9++) {
         if (this._yw1[_X9]) {
@@ -84359,7 +84920,7 @@ function _Tt3(_bu3) {
     }
     _Tt3(_eu3);
 }
- function _vt3() {
+/*@this {yyIOManager} */ function _vt3() {
     var _fu3 = 0,
         _gu3 = 0,
         _hu3 = 0;
@@ -87636,7 +88197,7 @@ function _SB3(_TB3, _UB3, _VB3) {
     switch (_VB3) {
         case _NA3:
             _9t1 = _TB3 + _eZ2(1) * _2f1;
-            break; 
+            break; //Gaussian distribution, SD = 1, cutoff @ +/- 3
         case _OA3:
             {
                 do {
@@ -87644,7 +88205,7 @@ function _SB3(_TB3, _UB3, _VB3) {
                 } while (exp(-(_j21 * _j21) * 0.5) <= _eZ2(1));
                 _9t1 = _TB3 + (_j21 + 3.0) * (1.0 / 6.0) * _2f1;
             }
-            break; 
+            break; //Inverse Gaussian distribution, SD = 1, cutoff @ +/- 3
         case _PA3:
             {
                 do {
@@ -90513,7 +91074,7 @@ _dd3.prototype._aH3 = function () {
     _zY2._wX2();
 };
 var _wI1 = [];
- function _eH3() {
+/*@constructor */ function _eH3() {
     this.__type = "[sound]";
     this._d2 = "";
     this._e2 = 0;
@@ -90617,7 +91178,7 @@ function _Zd3(_kv1, _Ub1, _JJ1, _ev1, _ZT2) {
     }
     return _Ub1;
 }
- function _hd3() {
+/*@constructor */ function _hd3() {
     this._c2 = [];
     this.length = 0;
 }
@@ -90627,7 +91188,7 @@ _hd3.prototype._qz1 = function (_G31) {
         this._c2[_G31] = undefined;
     }
 };
- function _rH3() {
+/*@this {yySound} */ function _rH3() {
     this._nH3 = false;
 }
 _hd3.prototype._sH3 = function (_G31) {
@@ -90663,7 +91224,7 @@ _hd3.prototype._qH3 = function (_l81) {
         }
     }
 };
- function _wH3() {
+/*@this {yySound} */ function _wH3() {
     try {
         this.currentTime = 0;
     } catch (_dc1) {
@@ -90690,7 +91251,7 @@ _hd3.prototype._Da1 = function (_Jh3) {
 var _8x1 = 0,
     _H01 = 1;
 var _xH3 = 2147483647;
- function _tp1() {
+/*@constructor */ function _tp1() {
     this.left = 0;
     this.top = 0;
     this.right = 0;
@@ -90702,7 +91263,7 @@ _tp1.prototype._Pb1 = function (__K1) {
     this.top = __K1.top;
     this.bottom = __K1.bottom;
 };
- function _EK1() {
+/*@constructor */ function _EK1() {
     this.__type = "[sprite]";
     this._d2 = "sprite";
     this.width = 16;
@@ -91284,7 +91845,7 @@ _EK1.prototype._9L1 = function (_911) {
     }
     return null;
 };
- function _ed3() {
+/*@constructor */ function _ed3() {
     this._m2 = [];
 }
 _ed3.prototype._GK1 = function (_5I3) {
@@ -91414,7 +91975,7 @@ _ed3.prototype._Md3 = function (_OI3) {
         debug("Cannot parse Spine data " + e.message);
     }
 };
- function _Ee3() {
+/*@constructor */ function _Ee3() {
     this.__type = "[TextureGroupInfo]";
     this._d2 = "unknowntexturegroup";
     this._Fe3 = [];
@@ -91423,7 +91984,7 @@ _ed3.prototype._Md3 = function (_OI3) {
     this._He3 = [];
     this._Ie3 = [];
 }
- function _fd3() {
+/*@constructor */ function _fd3() {
     this._ik = [];
 }
 _fd3.prototype._Le3 = function (_2J3) {
@@ -91498,7 +92059,7 @@ function _9J3(_4J3) {
         }
     }
 }
- function _aJ3() {
+/*@constructor */ function _aJ3() {
     this.__type = "[Tile]";
     this.x = 0;
     this.y = 0;
@@ -91599,7 +92160,7 @@ _aJ3.prototype._O31 = function () {
         }
     }
 };
- function _eJ3(_Jh3) {
+/*@constructor */ function _eJ3(_Jh3) {
     this.__type = "[Timeline]";
     if (_Jh3 != null && _Jh3 != undefined) {
         this._d2 = _Jh3._d2;
@@ -91640,7 +92201,7 @@ _eJ3.prototype._E_2 = function (_fJ3) {
 _eJ3.prototype._D_2 = function () {
     return this._fr1[this._fr1.length - 1]._gJ3;
 };
- function _kd3() {
+/*@constructor */ function _kd3() {
     this._0a = [];
 }
 _kd3.prototype._Da1 = function (_Jh3) {
@@ -91666,7 +92227,7 @@ _kd3.prototype._qz1 = function (_911) {
         this._0a[_911] = null;
     }
 };
-  function _je3(_hJ3) {
+/*@constructor */ /*@constructor */ function _je3(_hJ3) {
     if (!_hJ3) {
         this._xc1 = [];
     } else {
@@ -91826,7 +92387,7 @@ var _xJ3 = 12;
 var _yJ3 = 13;
 var _zJ3 = 14;
 var _AJ3 = 15;
- function _vx(_OA1, _BJ3, _CJ3, _P71) {
+/*@constructor */ function _vx(_OA1, _BJ3, _CJ3, _P71) {
     _BJ3 = yyGetInt32(_BJ3);
     _CJ3 = yyGetInt32(_CJ3);
     if (!(_OA1 instanceof Array)) _Rb1("array_set_2D() : argument 0 must be an array");
@@ -92310,7 +92871,7 @@ function _4K3() {
 function _5K3(_cK3) {
     debug("WARNING vertex_format_delete not implemented on HTML5 (System shares vertex formats but doesn't reference count)");
 }
- function _Cc3() {
+/*@constructor */ function _Cc3() {
     this.__type = "[View]";
     this._4a = false;
     this._lM1 = 0;
