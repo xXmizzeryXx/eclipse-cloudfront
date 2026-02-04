@@ -18,12 +18,13 @@
     font-family: 'Raleway', sans-serif;
     background: #0f0e0e;
     color: #eee;
-    overflow: hidden;
+    overflow-y: auto;
     display: flex;
     align-items: center;
     justify-content: center;
     min-height: 100vh;
     position: relative;
+    padding: 20px;
   }
 
   /* Background video */
@@ -56,9 +57,9 @@
   .maintenance-container {
     position: relative;
     z-index: 2;
-    text-align: center;
     padding: 40px;
-    max-width: 800px;
+    max-width: 1400px;
+    width: 100%;
     animation: fadeInUp 0.8s ease;
   }
 
@@ -71,6 +72,23 @@
       opacity: 1;
       transform: translateY(0);
     }
+  }
+
+  .content-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+
+  .left-section {
+    text-align: center;
+  }
+
+  .right-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 
   /* Logo */
@@ -118,13 +136,10 @@
   }
 
   .maintenance-message {
-    font-size: 20px;
+    font-size: 18px;
     color: #bdb1a0;
     line-height: 1.6;
     margin-bottom: 40px;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
   }
 
   .maintenance-details {
@@ -187,11 +202,74 @@
     }
   }
 
+  /* While You Wait Section */
+  .while-you-wait {
+    background: rgba(30, 22, 11, 0.8);
+    border: 2px solid #b88640;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 0 30px rgba(184, 134, 72, 0.2);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .wait-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: #eee;
+    margin-bottom: 25px;
+    text-align: center;
+  }
+
+  .game-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    flex: 1;
+  }
+
+  .game-btn {
+    background: linear-gradient(135deg, #b88640 0%, #ddb86a 100%);
+    border: none;
+    padding: 20px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-family: 'Montserrat', sans-serif;
+    cursor: pointer;
+    color: #0f0e0e;
+    font-size: 16px;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 4px 20px rgba(184,134,72,0.3);
+    transition: all 0.3s ease;
+  }
+
+  .game-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 30px rgba(184,134,72,0.5);
+  }
+
+  .game-btn i {
+    font-size: 32px;
+  }
+
+  .game-btn span {
+    font-size: 16px;
+  }
+
   /* Footer */
   .maintenance-footer {
-    margin-top: 50px;
+    margin-top: 40px;
     font-size: 14px;
     color: #888;
+    text-align: center;
+    grid-column: 1 / -1;
   }
 
   .maintenance-footer a {
@@ -232,7 +310,22 @@
   }
 
   /* Responsive */
+  @media (max-width: 1024px) {
+    .content-wrapper {
+      grid-template-columns: 1fr;
+      gap: 30px;
+    }
+
+    .right-section {
+      margin-top: 20px;
+    }
+  }
+
   @media (max-width: 768px) {
+    body {
+      overflow-y: auto;
+    }
+
     .logo {
       font-size: 48px;
     }
@@ -260,6 +353,23 @@
     .detail-item {
       font-size: 16px;
     }
+
+    .game-buttons {
+      grid-template-columns: 1fr;
+    }
+
+    .wait-title {
+      font-size: 24px;
+    }
+
+    .game-btn {
+      padding: 18px;
+      font-size: 15px;
+    }
+
+    .game-btn i {
+      font-size: 28px;
+    }
   }
 </style>
 </head>
@@ -275,41 +385,71 @@
 
 <!-- Main content -->
 <div class="maintenance-container">
-  <h1 class="logo">eclipse<span class="dot">.</span></h1>
-  
-  <div class="maintenance-icon">
-    <i class="fa-solid fa-screwdriver-wrench"></i>
-  </div>
-  
-  <h2 class="maintenance-title">Under Maintenance</h2>
-  
-  <p class="maintenance-message">
-    We're currently performing scheduled maintenance to improve your experience. 
-    Eclipse will be back online shortly. Thank you for your patience.
-  </p>
+  <div class="content-wrapper">
+    <!-- Left Section: Maintenance Info -->
+    <div class="left-section">
+      <h1 class="logo">eclipse<span class="dot">.</span></h1>
+      
+      <div class="maintenance-icon">
+        <i class="fa-solid fa-screwdriver-wrench"></i>
+      </div>
+      
+      <h2 class="maintenance-title">Under Maintenance</h2>
+      
+      <p class="maintenance-message">
+        We're currently performing scheduled maintenance to improve your experience. 
+        Eclipse will be back online shortly. Thank you for your patience.
+      </p>
 
-  <div class="maintenance-details">
-    <div class="detail-item">
-      <i class="fa-solid fa-clock"></i>
-      <span>Expected downtime: <strong>1 day</strong></span>
-    </div>
-    <div class="detail-item">
-      <i class="fa-solid fa-calendar"></i>
-      <span>Started: <strong id="currentTime"></strong></span>
-    </div>
-    <div class="detail-item">
-      <i class="fa-solid fa-wrench"></i>
-      <span>Performing system upgrades</span>
-    </div>
-  </div>
+      <div class="maintenance-details">
+        <div class="detail-item">
+          <i class="fa-solid fa-clock"></i>
+          <span>Expected downtime: <strong>1 day</strong></span>
+        </div>
+        <div class="detail-item">
+          <i class="fa-solid fa-calendar"></i>
+          <span>Started: <strong id="currentTime"></strong></span>
+        </div>
+        <div class="detail-item">
+          <i class="fa-solid fa-wrench"></i>
+          <span>Performing system upgrades</span>
+        </div>
+      </div>
 
-  <div class="progress-container">
-    <div class="progress-bar"></div>
-  </div>
+      <div class="progress-container">
+        <div class="progress-bar"></div>
+      </div>
 
-  <div class="status-indicator">
-    <div class="status-dot"></div>
-    <span>Maintenance in Progress</span>
+      <div class="status-indicator">
+        <div class="status-dot"></div>
+        <span>Maintenance in Progress</span>
+      </div>
+    </div>
+
+    <!-- Right Section: Games -->
+    <div class="right-section">
+      <div class="while-you-wait">
+        <h3 class="wait-title">While You Wait<span style="color: #b88640;">.</span></h3>
+        <div class="game-buttons">
+          <a href="/games/retro-bowl/index.html" class="game-btn">
+            <i class="fa-solid fa-football"></i>
+            <span>Retro Bowl</span>
+          </a>
+          <a href="/games/eaglercraft.html" class="game-btn">
+            <i class="fa-solid fa-cube"></i>
+            <span>EaglerCraft</span>
+          </a>
+          <a href="/games/super-hot/index.html" class="game-btn">
+            <i class="fa-solid fa-fire"></i>
+            <span>Superhot</span>
+          </a>
+          <a href="/games/slope.html" class="game-btn">
+            <i class="fa-solid fa-mountain"></i>
+            <span>Slope</span>
+          </a>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="maintenance-footer">
