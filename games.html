@@ -139,6 +139,13 @@
     color: #bdb1a0;
     font-size: 18px;
   }
+
+  .loading {
+    text-align: center;
+    padding: 60px 20px;
+    color: #b88640;
+    font-size: 18px;
+  }
 </style>
 </head>
 <body>
@@ -188,7 +195,10 @@
     </div>
 
     
-    <div class="games-grid" id="gamesGrid">
+    <div class="loading" id="loading">Loading games...</div>
+
+    
+    <div class="games-grid" id="gamesGrid" style="display: none;">
       
     </div>
 
@@ -217,110 +227,25 @@
     header: "games - eclipse."  
   };
 
-  const games = [
-    { 
-      name: "Time Shooter 2", 
-      category: "action", 
-      path: "games/timeshooter2.html", 
-      description: "Time moves only when you move." 
-    },
-    { 
-      name: "Slope", 
-      category: "arcade", 
-      path: "games/slope.html", 
-      description: "Don't let the ball crash." 
-    },
-    { 
-      name: "Tomb of the Mask", 
-      category: "puzzle", 
-      path: "games/tomb-of-the-mask.html", 
-      description: "Get the yellow guy through the levels." 
-    },
-    { 
-      name: "Task Force: Eclipse", 
-      category: "strategy", 
-      path: "games/eclipse.html", 
-      description: "Strategic shooter and tactics." 
-    },
-    { 
-      name: "Retro Bowl", 
-      category: "sports", 
-      path: "games/retro-bowl/index.html", 
-      description: "Football like the 80's." 
-    },
-    { 
-      name: "Madalin Stunt Cars 3", 
-      category: "racing", 
-      path: "games/Madalin Stunt Cars 3.html", 
-      description: "Do stunts in a cool car." 
-    },
-    { 
-      name: "Basket Random", 
-      category: "sports", 
-      path: "games/BasketRandom/index.html", 
-      description: "Ragdoll basketball fun." 
-    },
-    { 
-      name: "Boxing Random", 
-      category: "sports", 
-      path: "games/BoxingRandom/index.html", 
-      description: "Ragdoll rock-em, sock-em fun." 
-    },
-    { 
-      name: "Superhot", 
-      category: "action", 
-      path: "games/super-hot/index.html", 
-      description: "Better version of Time Shooter 2." 
-    },
-    { 
-      name: "Five Nights at Freddy's", 
-      category: "strategy", 
-      path: "games/fnaf1/index.html", 
-      description: "Survive the night at Freddy's." 
-    },
-    { 
-      name: "Five Nights at Freddy's 2", 
-      category: "strategy", 
-      path: "games/2/index.html", 
-      description: "Discover the origins of Freddy's." 
-    },
-    { 
-      name: "Five Nights at Freddy's 3", 
-      category: "strategy", 
-      path: "games/3/index.html", 
-      description: "He always comes back." 
-    },
-    { 
-      name: "Five Nights at Freddy's 4", 
-      category: "strategy", 
-      path: "games/4/index.html", 
-      description: "Survive the horrors at home." 
-    },
-    { 
-      name: "Five Nights at Freddy's: Sister Location", 
-      category: "strategy", 
-      path: "games/sl/index.html", 
-      description: "Explore the underground facility." 
-    },
-    { 
-      name: "FNAF: Ultimate Custom Night", 
-      category: "strategy", 
-      path: "games/ucn/index.html", 
-      description: "Face all animatronics at or customize your own night." 
-    },
-    { 
-      name: "EaglerCraft", 
-      category: "arcade", 
-      path: "games/eaglercraft.html", 
-      description: "Face an infinite adventure with endless opportunities." 
-    },
-    { 
-      name: "Gladihoppers", 
-      category: "strategy", 
-      path: "games/Gladihoppers.html", 
-      description: "Bounce around and swing your sword." 
-    },
-  ];
+  let games = [];
+
+  // Fetch games from zones.json
+  async function loadGames() {
+    try {
+      const response = await fetch('assets/json/zones.json');
+      if (!response.ok) {
+        throw new Error('Failed to load games');
+      }
+      games = await response.json();
+      document.getElementById('loading').style.display = 'none';
+      renderGames();
+    } catch (error) {
+      console.error('Error loading games:', error);
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('noResults').textContent = 'Failed to load games. Please refresh the page.';
+      document.getElementById('noResults').style.display = 'block';
+    }
+  }
 
   
   
@@ -382,7 +307,7 @@
   });
 
   
-  renderGames();
+  loadGames();
 
   
   const cloakPresets = [
