@@ -126,13 +126,6 @@
     margin-top: 8px;
   }
 
-  .game-description {
-    font-size: 13px;
-    color: #bdb1a0;
-    line-height: 1.4;
-    margin: 8px 0 0 0;
-  }
-
   .no-results {
     text-align: center;
     padding: 60px 20px;
@@ -147,7 +140,6 @@
     font-size: 18px;
   }
 
-  /* Enable scrolling */
   html, body {
     overflow-y: auto;
     height: auto;
@@ -160,7 +152,6 @@
 </style>
 </head>
 <body>
-
 
 <video id="videoBG" autoplay muted loop playsinline>
   <source src="assets/bg/background.mp4" type="video/mp4">
@@ -179,22 +170,19 @@
     <div class="icon" title="Settings" onclick="window.location.href='settings.html'"><i class="fa-solid fa-cog"></i></div>
   </nav>
 
-  
   <main class="content" role="main">
     
     <div class="games-header">
-      <h1 class="games-title" id="pageTitle">
+      <h1 class="games-title">
         games<span style="color: #b88640;">.</span>
       </h1>
-      <p class="games-subtitle" id="pageSubtitle">Browse and play popular unblocked games</p>
+      <p class="games-subtitle">Browse and play popular unblocked games</p>
     </div>
 
-    
     <div class="search-games">
       <input type="text" id="gameSearch" placeholder="Search games..." />
     </div>
 
-    
     <div class="category-filters">
       <button class="filter-btn active" data-category="all">All Games</button>
       <button class="filter-btn" data-category="action">Action</button>
@@ -205,12 +193,9 @@
       <button class="filter-btn" data-category="arcade">Arcade</button>
     </div>
 
-    
     <div class="loading" id="loading">Loading games...</div>
 
-    
     <div class="games-grid" id="gamesGrid" style="display: none;">
-      
     </div>
 
     <div class="no-results" id="noResults" style="display: none;">
@@ -219,7 +204,6 @@
 
   </main>
 </div>
-
 
 <footer class="status-bar" aria-label="Status bar">
   <span class="status-dot" aria-hidden="true"></span>
@@ -230,89 +214,115 @@
 </footer>
 
 <script>
-  
-  
-  const pageConfig = {
-    title: "games",  
-    subtitle: "Browse and play popular unblocked games",
-    header: "games - eclipse."  
-  };
-
-  let games = [];
-
-  // Fetch games from zones.json
-  async function loadGames() {
-    try {
-      const response = await fetch('assets/json/zones.json');
-      if (!response.ok) {
-        throw new Error('Failed to load games');
-      }
-      const rawGames = await response.json();
-      
-      // Transform zones.json format to our format
-      // Assuming {COVER_URL} and {HTML_URL} should be replaced with actual paths
-      const coverBase = 'assets/covers'; // Adjust this to your actual cover path
-      const htmlBase = 'assets/games';   // Adjust this to your actual games path
-      
-      games = rawGames.map(game => {
-        // Determine category from special tags or default to 'arcade'
-        let category = 'arcade';
-        if (game.special && game.special.length > 0) {
-          // Map special tags to our category system
-          const specialTag = game.special[0].toLowerCase();
-          const categoryMap = {
-            'port': 'action',
-            'flash': 'arcade',
-            'emulator': 'arcade',
-            'tools': 'puzzle',
-            'fnf': 'arcade'
-          };
-          category = categoryMap[specialTag] || 'arcade';
-        }
-        
-        return {
-          id: game.id,
-          name: game.name,
-          category: category,
-          path: game.url.replace('{HTML_URL}', htmlBase),
-          description: game.author || 'Play this game',
-          cover: game.cover.replace('{COVER_URL}', coverBase)
-        };
-      });
-      
-      document.getElementById('loading').style.display = 'none';
-      renderGames();
-    } catch (error) {
-      console.error('Error loading games:', error);
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('noResults').textContent = 'Failed to load games. Please refresh the page.';
-      document.getElementById('noResults').style.display = 'block';
+  const games = [
+    { name: "10 Minutes Till Dawn", folder: "10-minutes-till-dawn" },
+    { name: "2048 Multitask", folder: "2048-multitask" },
+    { name: "2048", folder: "2048" },
+    { name: "9007199254740992", folder: "9007199254740992" },
+    { name: "A Dance Of Fire And Ice", folder: "a-dance-of-fire-and-ice" },
+    { name: "A Dark Room", folder: "a-dark-room" },
+    { name: "Adrenaline Challenge", folder: "adrenaline-challenge" },
+    { name: "Adventure Drivers", folder: "adventure-drivers" },
+    { name: "Ages Of Conflict", folder: "ages-of-conflict" },
+    { name: "Backrooms 2D", folder: "backrooms-2d" },
+    { name: "Backrooms", folder: "backrooms" },
+    { name: "Bacon May Die", folder: "bacon-may-die" },
+    { name: "Bad Ice Cream 2", folder: "bad-ice-cream-2" },
+    { name: "Bad Ice Cream 3", folder: "bad-ice-cream-3" },
+    { name: "Bad Ice Cream", folder: "bad-ice-cream" },
+    { name: "Baldis Basics", folder: "baldis-basics" },
+    { name: "Basket Random", folder: "basket-random" },
+    { name: "Bitlife", folder: "bitlife" },
+    { name: "Boxing Random", folder: "boxing-random" },
+    { name: "Btts", folder: "btts" },
+    { name: "Buckshot Roulette", folder: "buckshot-roulette" },
+    { name: "Cluster Rush", folder: "cluster-rush" },
+    { name: "Core Ball", folder: "core-ball" },
+    { name: "Creative Kill Chamber", folder: "creative-kill-chamber" },
+    { name: "Crossy Road", folder: "crossy-road" },
+    { name: "Cupcake 2048", folder: "cupcake-2048" },
+    { name: "Dante", folder: "dante" },
+    { name: "Deal Or No Deal", folder: "deal-or-no-deal" },
+    { name: "Death Run 3D", folder: "death-run-3d" },
+    { name: "Drift Boss", folder: "drift-boss" },
+    { name: "Drift Hunters", folder: "drift-hunters" },
+    { name: "Drive Mad", folder: "drive-mad" },
+    { name: "Duck Life 3", folder: "duck-life-3" },
+    { name: "Duck Life 4", folder: "duck-life-4" },
+    { name: "Eggy Car", folder: "eggy-car" },
+    { name: "Fnaw", folder: "fnaw" },
+    { name: "Funny Shooter 2", folder: "funny-shooter-2" },
+    { name: "Funny Shooter", folder: "funny-shooter" },
+    { name: "Getaway Shootout", folder: "getaway-shootout" },
+    { name: "Learn To Fly 2", folder: "learn-to-fly-2" },
+    { name: "Learn To Fly", folder: "learn-to-fly" },
+    { name: "Madalin Stunt Cars 2", folder: "madalin-stunt-cars-2" },
+    { name: "Madalin Stunt Cars 3", folder: "madalin-stunt-cars-3" },
+    { name: "Monkey Mart", folder: "monkey-mart" },
+    { name: "Motox3M 2", folder: "motox3m-2" },
+    { name: "Motox3M Pool", folder: "motox3m-pool" },
+    { name: "Motox3M Spooky", folder: "motox3m-spooky" },
+    { name: "Motox3M Winter", folder: "motox3m-winter" },
+    { name: "Motox3M", folder: "motox3m" },
+    { name: "Resent Client", folder: "resent-client" },
+    { name: "Retro Bowl", folder: "retro-bowl" },
+    { name: "Rooftop Snipers", folder: "rooftop-snipers" },
+    { name: "Run 2", folder: "run-2" },
+    { name: "Run 3", folder: "run-3" },
+    { name: "Scrap Metal", folder: "scrap-metal" },
+    { name: "Slope 2", folder: "slope-2" },
+    { name: "Slope Ball", folder: "slope-ball" },
+    { name: "Slope", folder: "slope" },
+    { name: "Snow Rider 3D", folder: "snow-rider-3d" },
+    { name: "Soccer Random", folder: "soccer-random" },
+    { name: "Stickman Hook", folder: "stickman-hook" },
+    { name: "Super Hot", folder: "super-hot" },
+    { name: "Tanuki Sunset", folder: "tanuki-sunset" },
+    { name: "Tunnel Rush", folder: "tunnel-rush" },
+    { name: "Ultrakill", folder: "ultrakill" },
+    { name: "Vex 3", folder: "vex-3" },
+    { name: "Vex 4", folder: "vex-4" },
+    { name: "Vex 5", folder: "vex-5" },
+    { name: "Vex 6", folder: "vex-6" },
+    { name: "Vex 7", folder: "vex-7" },
+    { name: "Volley Random", folder: "volley-random" },
+    { name: "Worlds Hardest Game 2", folder: "worlds-hardest-game-2" },
+    { name: "Worlds Hardest Game", folder: "worlds-hardest-game" }
+  ].map(game => {
+    const nameLower = game.name.toLowerCase();
+    let category = 'arcade';
+    
+    if (nameLower.includes('drift') || nameLower.includes('car') || nameLower.includes('moto') || nameLower.includes('drive')) {
+      category = 'racing';
+    } else if (nameLower.includes('2048') || nameLower.includes('puzzle')) {
+      category = 'puzzle';
+    } else if (nameLower.includes('shooter') || nameLower.includes('die') || nameLower.includes('rush') || nameLower.includes('kill') || nameLower.includes('combat') || nameLower.includes('sniper')) {
+      category = 'action';
+    } else if (nameLower.includes('random') || nameLower.includes('basket') || nameLower.includes('soccer') || nameLower.includes('volley') || nameLower.includes('boxing') || nameLower.includes('bowl')) {
+      category = 'sports';
+    } else if (nameLower.includes('strategy') || nameLower.includes('conflict') || nameLower.includes('ages')) {
+      category = 'strategy';
     }
-  }
-
-  
-  
-  
-  document.title = pageConfig.header;
-  document.getElementById('pageTitle').innerHTML = pageConfig.title + '<span style="color: #b88640;">.</span>';
-  document.getElementById('pageSubtitle').textContent = pageConfig.subtitle;
+    
+    return { ...game, category };
+  });
 
   let currentCategory = 'all';
   let searchQuery = '';
 
-  
   function renderGames() {
     const grid = document.getElementById('gamesGrid');
     const noResults = document.getElementById('noResults');
+    const loading = document.getElementById('loading');
     
     let filtered = games.filter(game => {
       const matchesCategory = currentCategory === 'all' || game.category === currentCategory;
       const searchLower = searchQuery.toLowerCase();
-      const matchesSearch = searchQuery === '' || 
-                           game.name.toLowerCase().includes(searchLower) ||
-                           game.description.toLowerCase().includes(searchLower);
+      const matchesSearch = searchQuery === '' || game.name.toLowerCase().includes(searchLower);
       return matchesCategory && matchesSearch;
     });
+
+    loading.style.display = 'none';
 
     if (filtered.length === 0) {
       grid.style.display = 'none';
@@ -322,11 +332,10 @@
       noResults.style.display = 'none';
       
       grid.innerHTML = filtered.map(game => `
-        <a href="game-modal.html?id=${game.id || encodeURIComponent(game.path)}" class="game-card">
+        <a href="game-modal.html?game=${encodeURIComponent(game.folder)}" class="game-card">
           <div class="game-info">
             <h3 class="game-title">${game.name}</h3>
             <div class="game-category">${game.category}</div>
-            <p class="game-description">${game.description}</p>
           </div>
         </a>
       `).join('');
@@ -335,7 +344,6 @@
     document.getElementById('gameCount').textContent = filtered.length;
   }
 
-  
   document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', function() {
       document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -345,46 +353,25 @@
     });
   });
 
-  
   document.getElementById('gameSearch').addEventListener('input', function(e) {
     searchQuery = e.target.value;
     renderGames();
   });
 
-  
-  loadGames();
-
-  
   const cloakPresets = [
     { title: "Google", favicon: "https://www.google.com/favicon.ico" },
     { title: "Google Docs", favicon: "https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico" },
     { title: "Google Classroom", favicon: "https://ssl.gstatic.com/classroom/favicon.png" },
-    { title: "Canvas", favicon: "https://du11hjcvx0uqb.cloudfront.net/dist/images/favicon-e10d657a73.ico" },
-    { title: "Gmail", favicon: "https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico" },
-    { title: "Google Drive", favicon: "https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png" },
-    { title: "Google Slides", favicon: "https://ssl.gstatic.com/docs/presentations/images/favicon5.ico" },
-    { title: "Google Sheets", favicon: "https://ssl.gstatic.com/docs/spreadsheets/favicon3.ico" },
-    { title: "YouTube", favicon: "https://www.youtube.com/s/desktop/6e6c14c5/img/favicon_32x32.png" },
-    { title: "Wikipedia", favicon: "https://www.wikipedia.org/static/favicon/wikipedia.ico" }
+    { title: "Canvas", favicon: "https://du11hjcvx0uqb.cloudfront.net/dist/images/favicon-e10d657a73.ico" }
   ];
 
   document.getElementById('emergencyCloakBtn').addEventListener('click', () => {
     const randomPreset = cloakPresets[Math.floor(Math.random() * cloakPresets.length)];
     document.title = randomPreset.title;
     document.querySelector('link[rel="icon"]').href = randomPreset.favicon;
-    localStorage.setItem('cloakTitle', randomPreset.title);
-    localStorage.setItem('cloakFavicon', randomPreset.favicon);
   });
 
-  
-  const savedTitle = localStorage.getItem('cloakTitle');
-  const savedFavicon = localStorage.getItem('cloakFavicon');
-  if(savedTitle) {
-    document.title = savedTitle;
-  }
-  if(savedFavicon) {
-    document.querySelector('link[rel="icon"]').href = savedFavicon;
-  }
+  renderGames();
 </script>
 </body>
 </html>

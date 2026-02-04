@@ -70,13 +70,84 @@
 </div>
 
 <script>
-  let games = [];
+  const allGames = [
+    { name: "10 Minutes Till Dawn", folder: "10-minutes-till-dawn", category: "action" },
+    { name: "2048 Multitask", folder: "2048-multitask", category: "puzzle" },
+    { name: "2048", folder: "2048", category: "puzzle" },
+    { name: "9007199254740992", folder: "9007199254740992", category: "arcade" },
+    { name: "A Dance Of Fire And Ice", folder: "a-dance-of-fire-and-ice", category: "arcade" },
+    { name: "A Dark Room", folder: "a-dark-room", category: "arcade" },
+    { name: "Adrenaline Challenge", folder: "adrenaline-challenge", category: "arcade" },
+    { name: "Adventure Drivers", folder: "adventure-drivers", category: "racing" },
+    { name: "Ages Of Conflict", folder: "ages-of-conflict", category: "strategy" },
+    { name: "Backrooms 2D", folder: "backrooms-2d", category: "arcade" },
+    { name: "Backrooms", folder: "backrooms", category: "arcade" },
+    { name: "Bacon May Die", folder: "bacon-may-die", category: "action" },
+    { name: "Bad Ice Cream 2", folder: "bad-ice-cream-2", category: "arcade" },
+    { name: "Bad Ice Cream 3", folder: "bad-ice-cream-3", category: "arcade" },
+    { name: "Bad Ice Cream", folder: "bad-ice-cream", category: "arcade" },
+    { name: "Baldis Basics", folder: "baldis-basics", category: "arcade" },
+    { name: "Basket Random", folder: "basket-random", category: "sports" },
+    { name: "Bitlife", folder: "bitlife", category: "arcade" },
+    { name: "Boxing Random", folder: "boxing-random", category: "sports" },
+    { name: "Btts", folder: "btts", category: "arcade" },
+    { name: "Buckshot Roulette", folder: "buckshot-roulette", category: "arcade" },
+    { name: "Cluster Rush", folder: "cluster-rush", category: "action" },
+    { name: "Core Ball", folder: "core-ball", category: "arcade" },
+    { name: "Creative Kill Chamber", folder: "creative-kill-chamber", category: "action" },
+    { name: "Crossy Road", folder: "crossy-road", category: "arcade" },
+    { name: "Cupcake 2048", folder: "cupcake-2048", category: "puzzle" },
+    { name: "Dante", folder: "dante", category: "arcade" },
+    { name: "Deal Or No Deal", folder: "deal-or-no-deal", category: "arcade" },
+    { name: "Death Run 3D", folder: "death-run-3d", category: "action" },
+    { name: "Drift Boss", folder: "drift-boss", category: "racing" },
+    { name: "Drift Hunters", folder: "drift-hunters", category: "racing" },
+    { name: "Drive Mad", folder: "drive-mad", category: "racing" },
+    { name: "Duck Life 3", folder: "duck-life-3", category: "arcade" },
+    { name: "Duck Life 4", folder: "duck-life-4", category: "arcade" },
+    { name: "Eggy Car", folder: "eggy-car", category: "racing" },
+    { name: "Fnaw", folder: "fnaw", category: "arcade" },
+    { name: "Funny Shooter 2", folder: "funny-shooter-2", category: "action" },
+    { name: "Funny Shooter", folder: "funny-shooter", category: "action" },
+    { name: "Getaway Shootout", folder: "getaway-shootout", category: "action" },
+    { name: "Learn To Fly 2", folder: "learn-to-fly-2", category: "arcade" },
+    { name: "Learn To Fly", folder: "learn-to-fly", category: "arcade" },
+    { name: "Madalin Stunt Cars 2", folder: "madalin-stunt-cars-2", category: "racing" },
+    { name: "Madalin Stunt Cars 3", folder: "madalin-stunt-cars-3", category: "racing" },
+    { name: "Monkey Mart", folder: "monkey-mart", category: "arcade" },
+    { name: "Motox3M 2", folder: "motox3m-2", category: "racing" },
+    { name: "Motox3M Pool", folder: "motox3m-pool", category: "racing" },
+    { name: "Motox3M Spooky", folder: "motox3m-spooky", category: "racing" },
+    { name: "Motox3M Winter", folder: "motox3m-winter", category: "racing" },
+    { name: "Motox3M", folder: "motox3m", category: "racing" },
+    { name: "Resent Client", folder: "resent-client", category: "arcade" },
+    { name: "Retro Bowl", folder: "retro-bowl", category: "sports" },
+    { name: "Rooftop Snipers", folder: "rooftop-snipers", category: "action" },
+    { name: "Run 2", folder: "run-2", category: "arcade" },
+    { name: "Run 3", folder: "run-3", category: "arcade" },
+    { name: "Scrap Metal", folder: "scrap-metal", category: "arcade" },
+    { name: "Slope 2", folder: "slope-2", category: "arcade" },
+    { name: "Slope Ball", folder: "slope-ball", category: "arcade" },
+    { name: "Slope", folder: "slope", category: "arcade" },
+    { name: "Snow Rider 3D", folder: "snow-rider-3d", category: "arcade" },
+    { name: "Soccer Random", folder: "soccer-random", category: "sports" },
+    { name: "Stickman Hook", folder: "stickman-hook", category: "arcade" },
+    { name: "Super Hot", folder: "super-hot", category: "arcade" },
+    { name: "Tanuki Sunset", folder: "tanuki-sunset", category: "arcade" },
+    { name: "Tunnel Rush", folder: "tunnel-rush", category: "action" },
+    { name: "Ultrakill", folder: "ultrakill", category: "arcade" },
+    { name: "Vex 3", folder: "vex-3", category: "arcade" },
+    { name: "Vex 4", folder: "vex-4", category: "arcade" },
+    { name: "Vex 5", folder: "vex-5", category: "arcade" },
+    { name: "Vex 6", folder: "vex-6", category: "arcade" },
+    { name: "Vex 7", folder: "vex-7", category: "arcade" },
+    { name: "Volley Random", folder: "volley-random", category: "sports" },
+    { name: "Worlds Hardest Game 2", folder: "worlds-hardest-game-2", category: "arcade" },
+    { name: "Worlds Hardest Game", folder: "worlds-hardest-game", category: "arcade" }
+  ];
 
   const params = new URLSearchParams(location.search);
-  const initialId = params.get('id') || '';
-  const initialPath = params.get('path') || '';
-  const initialName = params.get('name') || '';
-  const initialDescription = params.get('description') || '';
+  const gameFolder = params.get('game');
 
   const titleEl = document.getElementById('title');
   const descEl = document.getElementById('description');
@@ -84,111 +155,62 @@
   const listEl = document.getElementById('gameList');
   const openRawBtn = document.getElementById('openRawBtn');
 
-  // Fetch games from zones.json
-  async function loadGames() {
-    try {
-      const response = await fetch('assets/json/zones.json');
-      if (!response.ok) {
-        throw new Error('Failed to load games');
-      }
-      const rawGames = await response.json();
-      
-      // Transform zones.json format to our format
-      const coverBase = 'assets/covers'; 
-      const htmlBase = 'assets/games';
-      
-      games = rawGames.map(game => ({
-        id: game.id,
-        name: game.name,
-        category: game.special ? game.special[0] : 'game',
-        path: game.url.replace('{HTML_URL}', htmlBase),
-        description: game.author ? `By ${game.author}` : 'Play this game',
-        cover: game.cover.replace('{COVER_URL}', coverBase),
-        author: game.author,
-        authorLink: game.authorLink
-      }));
-      
-      buildList();
-      
-      // Set initial game
-      let initialGame = null;
-      
-      if (initialId) {
-        initialGame = games.find(g => g.id == initialId);
-      } else if (initialPath) {
-        initialGame = { path: initialPath, name: initialName, description: initialDescription };
-      } else {
-        initialGame = games[0];
-      }
-      
-      if (initialGame) {
-        setGame(
-          initialGame.id || null,
-          initialGame.path || 'about:blank', 
-          initialGame.name || 'Play', 
-          initialGame.description || '',
-          false
-        );
-      }
-    } catch (error) {
-      console.error('Error loading games:', error);
-      listEl.innerHTML = '<div class="loading">Error loading games</div>';
-      
-      // Fallback to initial game if provided via URL params
-      if (initialPath) {
-        setGame(null, initialPath, initialName, initialDescription, false);
-      }
-    }
-  }
+  let currentGame = null;
 
-  function setGame(id, path, name, description, push=true){
-    titleEl.textContent = name || decodeURIComponent(path.split('/').pop());
-    descEl.textContent = description || '';
-    frame.src = path;
-    openRawBtn.href = path;
+  function setGame(folder) {
+    const game = allGames.find(g => g.folder === folder);
     
-    document.querySelectorAll('.side-item').forEach(el => el.classList.remove('active'));
-    
-    if (id !== null) {
-      const active = document.querySelector(`.side-item[data-id="${id}"]`);
+    if (game) {
+      currentGame = game;
+      const gamePath = `games/${folder}/index.html`;
+      
+      titleEl.textContent = game.name;
+      descEl.textContent = game.category.toUpperCase();
+      frame.src = gamePath;
+      openRawBtn.href = gamePath;
+      
+      document.querySelectorAll('.side-item').forEach(el => el.classList.remove('active'));
+      const active = document.querySelector(`.side-item[data-folder="${folder}"]`);
       if(active) active.classList.add('active');
-    }
-    
-    if(push){
-      const url = id !== null 
-        ? `?id=${id}`
-        : `?path=${encodeURIComponent(path)}&name=${encodeURIComponent(name||'')}&description=${encodeURIComponent(description||'')}`;
-      history.replaceState({}, '', url);
+      
+      history.replaceState({}, '', `?game=${encodeURIComponent(folder)}`);
+    } else {
+      titleEl.textContent = 'Game Not Found';
+      descEl.textContent = '';
     }
   }
 
-  function buildList(){
+  function buildList() {
     listEl.innerHTML = '';
     
-    // Show random 50 games to avoid overwhelming the sidebar
-    const shuffled = [...games].sort(() => Math.random() - 0.5);
+    const shuffled = [...allGames].sort(() => Math.random() - 0.5);
     const displayGames = shuffled.slice(0, 50);
     
     displayGames.forEach(g => {
       const a = document.createElement('a');
       a.className = 'side-item';
       a.href = '#';
-      a.setAttribute('data-id', g.id);
+      a.setAttribute('data-folder', g.folder);
       a.innerHTML = `<div class="name">${g.name}</div><div class="cat">${g.category}</div>`;
-      a.addEventListener('click', (e)=>{
+      a.addEventListener('click', (e) => {
         e.preventDefault();
-        setGame(g.id, g.path, g.name, g.description, true);
+        setGame(g.folder);
       });
       listEl.appendChild(a);
     });
   }
 
-  document.getElementById('backBtn').addEventListener('click', ()=>{ 
+  document.getElementById('backBtn').addEventListener('click', () => { 
     window.location.href = 'games.html'; 
   });
 
-  // Load games on page load
-  loadGames();
+  buildList();
+  
+  if (gameFolder) {
+    setGame(gameFolder);
+  } else {
+    setGame(allGames[0].folder);
+  }
 
 </script>
 </body>
