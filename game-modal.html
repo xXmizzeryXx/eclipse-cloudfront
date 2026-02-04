@@ -10,30 +10,34 @@
   <link rel="stylesheet" href="assets/css/styles.css" />
   <style>
     :root{--bg:#0f0e0e;--card:#1e160b;--accent:#b88640;--muted:#bdb1a0}
-    body{background:var(--bg);color:#eee;font-family:Raleway,system-ui,Segoe UI,Roboto,Arial;margin:0}
+    body{background:var(--bg);color:#eee;font-family:Raleway,system-ui,Segoe UI,Roboto,Arial;margin:0;overflow-y:auto}
     .player-app{display:flex;gap:20px;padding:28px;min-height:100vh;box-sizing:border-box}
     .player-wrap{flex:1;background:transparent;display:flex;flex-direction:column;gap:12px}
-    .player-header{display:flex;align-items:center;justify-content:space-between}
+    .player-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
     .player-title{font-family:Montserrat,Arial;font-size:20px;margin:0;color:#fff}
     .player-desc{color:var(--muted);margin:0;font-size:14px}
-    .player-frame{flex:1;border-radius:12px;overflow:hidden;background:#000;border:2px solid rgba(255,255,255,0.03)}
+    .player-frame{flex:1;min-height:600px;border-radius:12px;overflow:hidden;background:#000;border:2px solid rgba(255,255,255,0.03)}
     .player-frame iframe{width:100%;height:100%;border:0;display:block}
-    .sidebar{width:320px;background:var(--card);border-radius:12px;padding:16px;box-shadow:0 6px 24px rgba(0,0,0,0.4)}
+    .sidebar{width:320px;background:var(--card);border-radius:12px;padding:16px;box-shadow:0 6px 24px rgba(0,0,0,0.4);align-self:flex-start;position:sticky;top:20px;max-height:calc(100vh - 40px);overflow:hidden;display:flex;flex-direction:column}
     .sidebar h4{margin:0 0 12px 0;font-size:14px;color:var(--accent);text-transform:uppercase}
-    .game-list{display:flex;flex-direction:column;gap:10px;overflow:auto;max-height:calc(100vh - 120px);padding-right:6px}
+    .game-list{display:flex;flex-direction:column;gap:10px;overflow-y:auto;flex:1;padding-right:6px}
     .game-list::-webkit-scrollbar{width:8px}
     .game-list::-webkit-scrollbar-track{background:rgba(0,0,0,0.2);border-radius:4px}
     .game-list::-webkit-scrollbar-thumb{background:var(--accent);border-radius:4px}
     .game-list::-webkit-scrollbar-thumb:hover{background:#d4a050}
-    .side-item{display:flex;flex-direction:column;padding:10px;border-radius:8px;background:rgba(0,0,0,0.05);cursor:pointer;color:#eee;text-decoration:none}
+    .side-item{display:flex;flex-direction:column;padding:10px;border-radius:8px;background:rgba(0,0,0,0.05);cursor:pointer;color:#eee;text-decoration:none;transition:all 0.2s}
+    .side-item:hover{background:rgba(184,134,64,0.2)}
     .side-item.active{background:var(--accent);color:var(--bg)}
     .side-item .name{font-weight:700;font-size:14px}
-    .side-item .cat{font-size:11px;color:var(--muted);text-transform:uppercase}
-    .controls{display:flex;gap:8px;align-items:center}
-    .btn{background:transparent;border:2px solid var(--accent);color:var(--accent);padding:6px 10px;border-radius:8px;cursor:pointer}
+    .side-item .cat{font-size:11px;color:var(--muted);text-transform:uppercase;margin-top:4px}
+    .side-item.active .cat{color:rgba(15,14,14,0.7)}
+    .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .btn{background:transparent;border:2px solid var(--accent);color:var(--accent);padding:6px 10px;border-radius:8px;cursor:pointer;text-decoration:none;display:inline-block;transition:all 0.2s}
+    .btn:hover{background:rgba(184,134,64,0.1)}
     .btn.primary{background:var(--accent);color:var(--bg)}
+    .btn.primary:hover{background:#d4a050}
     .loading{text-align:center;color:var(--muted);padding:20px;font-size:14px}
-    @media(max-width:900px){.player-app{flex-direction:column}.sidebar{width:100%;order:2}}
+    @media(max-width:900px){.player-app{flex-direction:column}.sidebar{width:100%;order:2;position:static;max-height:400px}}
   </style>
 </head>
 <body>
@@ -52,7 +56,7 @@
     </div>
 
     <div class="player-frame" id="frameWrap">
-      <iframe id="gameFrame" src="about:blank" title="Game player" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"></iframe>
+      <iframe id="gameFrame" src="about:blank" title="Game player" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-popups" allowfullscreen></iframe>
     </div>
   </div>
 
@@ -69,6 +73,7 @@
   let games = [];
 
   const params = new URLSearchParams(location.search);
+  const initialId = params.get('id') || '';
   const initialPath = params.get('path') || '';
   const initialName = params.get('name') || '';
   const initialDescription = params.get('description') || '';
@@ -79,76 +84,108 @@
   const listEl = document.getElementById('gameList');
   const openRawBtn = document.getElementById('openRawBtn');
 
-  // Fetch games from games.html
+  // Fetch games from zones.json
   async function loadGames() {
     try {
-      const response = await fetch('games.html');
-      const html = await response.text();
+      const response = await fetch('assets/json/zones.json');
+      if (!response.ok) {
+        throw new Error('Failed to load games');
+      }
+      const rawGames = await response.json();
       
-      // Extract the games array from the HTML using regex
-      const match = html.match(/const games = \[([\s\S]*?)\];/);
-      if (match) {
-        // Parse the games array
-        const gamesStr = '[' + match[1] + ']';
-        // Use eval carefully here (only on our own trusted content)
-        games = eval(gamesStr);
-        buildList();
-        
-        // Set initial game
-        const firstGame = games[0] || {};
+      // Transform zones.json format to our format
+      const coverBase = 'assets/covers'; 
+      const htmlBase = 'assets/games';
+      
+      games = rawGames.map(game => ({
+        id: game.id,
+        name: game.name,
+        category: game.special ? game.special[0] : 'game',
+        path: game.url.replace('{HTML_URL}', htmlBase),
+        description: game.author ? `By ${game.author}` : 'Play this game',
+        cover: game.cover.replace('{COVER_URL}', coverBase),
+        author: game.author,
+        authorLink: game.authorLink
+      }));
+      
+      buildList();
+      
+      // Set initial game
+      let initialGame = null;
+      
+      if (initialId) {
+        initialGame = games.find(g => g.id == initialId);
+      } else if (initialPath) {
+        initialGame = { path: initialPath, name: initialName, description: initialDescription };
+      } else {
+        initialGame = games[0];
+      }
+      
+      if (initialGame) {
         setGame(
-          initialPath || firstGame.path || 'about:blank', 
-          initialName || firstGame.name || 'Play', 
-          initialDescription || firstGame.description || '',
+          initialGame.id || null,
+          initialGame.path || 'about:blank', 
+          initialGame.name || 'Play', 
+          initialGame.description || '',
           false
         );
-      } else {
-        console.error('Could not find games array in games.html');
-        listEl.innerHTML = '<div class="loading">Error loading games</div>';
       }
     } catch (error) {
       console.error('Error loading games:', error);
       listEl.innerHTML = '<div class="loading">Error loading games</div>';
       
-      // Fallback to initial game if provided
+      // Fallback to initial game if provided via URL params
       if (initialPath) {
-        setGame(initialPath, initialName, initialDescription, false);
+        setGame(null, initialPath, initialName, initialDescription, false);
       }
     }
   }
 
-  function setGame(path, name, description, push=true){
+  function setGame(id, path, name, description, push=true){
     titleEl.textContent = name || decodeURIComponent(path.split('/').pop());
     descEl.textContent = description || '';
     frame.src = path;
     openRawBtn.href = path;
+    
     document.querySelectorAll('.side-item').forEach(el => el.classList.remove('active'));
-    const items = Array.from(document.querySelectorAll('.side-item'));
-    const active = items.find(i => i.getAttribute('data-path') === path);
-    if(active) active.classList.add('active');
+    
+    if (id !== null) {
+      const active = document.querySelector(`.side-item[data-id="${id}"]`);
+      if(active) active.classList.add('active');
+    }
+    
     if(push){
-      const url = `?path=${encodeURIComponent(path)}&name=${encodeURIComponent(name||'')}&description=${encodeURIComponent(description||'')}`;
+      const url = id !== null 
+        ? `?id=${id}`
+        : `?path=${encodeURIComponent(path)}&name=${encodeURIComponent(name||'')}&description=${encodeURIComponent(description||'')}`;
       history.replaceState({}, '', url);
     }
   }
 
   function buildList(){
     listEl.innerHTML = '';
-    games.forEach(g => {
+    
+    // Show random 50 games to avoid overwhelming the sidebar
+    const shuffled = [...games].sort(() => Math.random() - 0.5);
+    const displayGames = shuffled.slice(0, 50);
+    
+    displayGames.forEach(g => {
       const a = document.createElement('a');
       a.className = 'side-item';
       a.href = '#';
-      a.setAttribute('data-path', g.path);
+      a.setAttribute('data-id', g.id);
       a.innerHTML = `<div class="name">${g.name}</div><div class="cat">${g.category}</div>`;
       a.addEventListener('click', (e)=>{
         e.preventDefault();
-        setGame(g.path, g.name, g.description, true);
+        setGame(g.id, g.path, g.name, g.description, true);
       });
       listEl.appendChild(a);
     });
   }
 
-  document.getElementById('backBtn').addEventListener('click', ()=>{ location.href = 'games.html'; });
+  document.getElementById('backBtn').addEventListener('click', ()=>{ 
+    window.location.href = 'games.html'; 
+  });
 
   // Load games on page load
   loadGames();
