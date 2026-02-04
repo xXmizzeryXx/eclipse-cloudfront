@@ -291,7 +291,7 @@
   <div class="maintenance-details">
     <div class="detail-item">
       <i class="fa-solid fa-clock"></i>
-      <span>Expected downtime: <strong>1-2 hours</strong></span>
+      <span>Expected downtime: <strong>1 day</strong></span>
     </div>
     <div class="detail-item">
       <i class="fa-solid fa-calendar"></i>
@@ -318,10 +318,13 @@
 </div>
 
 <script>
-  // Update current time
+  // Set start time to 7:00 AM today
   function updateTime() {
     const now = new Date();
-    const timeString = now.toLocaleString('en-US', {
+    const startTime = new Date();
+    startTime.setHours(7, 0, 0, 0);
+    
+    const timeString = startTime.toLocaleString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
@@ -332,7 +335,6 @@
   }
 
   updateTime();
-  setInterval(updateTime, 60000);
 </script>
 
 </body>
