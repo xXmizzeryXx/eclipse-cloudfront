@@ -49,7 +49,7 @@ eclipse/
 - **[Ultraviolet](https://github.com/titaniumnetwork-dev/Ultraviolet)** - Proxy backend
 - **[Font Awesome](https://fontawesome.com/)** - Icons
 - **[Google Fonts](https://fonts.google.com/)** - Typography (Montserrat, Raleway)
-- **[Gn-Math](https://gn-math.dev/)** - all Games
+- **[Crafted](https://crafted.pages.dev)** - all Games
 
 ## 📝 License
 
